@@ -32,7 +32,6 @@ $ ./init.sh
 # Usage
 
 1. Prepare a firmware.
-
 ```
 $ wget ftp://ftp.dlink.eu/Products/dir/dir-868l/driver_software/DIR-868L_fw_revB_2-05b02_eu_multi_20161117.zip
 ```
@@ -45,6 +44,23 @@ $ sudo ./run.sh -c <brand> <firmware>
 3. Run analysis
 ```
 $ sudo ./run.sh -a <brand> <firmware>
+```
+
+## Turn on/off arbitration
+
+Check the five arbitrations environment variable in the `firmae.config`
+```sh
+$ head firmae.config
+#!/bin/sh
+
+FIRMAE_BOOT=true
+FIRMAE_NETWORK=true
+FIRMAE_NVRAM=true
+FIRMAE_KERNEL=true
+FIRMAE_ETC=true
+
+if (${FIRMAE_ETC}); then
+  TIMEOUT=240
 ```
 
 ## Parallel mode
@@ -64,8 +80,16 @@ $ sudo ./docker-helper.py -ea <brand> <firmware>
 
 - ASUS: [CVE-2019-20082](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-20082)
 - Belkin: [Belkin01](https://github.com/pr0v3rbs/CVE/tree/master/Belkin01)
-- D-Link: [CVE-2018-20114](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-20114), [CVE-2018-19986](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19986---hnap1setroutersettings), [CVE-2018-19987](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19987---hnap1setaccesspointmode), [CVE-2018-19988](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19988---hnap1setclientinfodemo), [CVE-2018-19989](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19989---hnap1setqossettings), [CVE-2018-19990](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19990---hnap1setwifiverifyalpha), [CVE-2019-6258](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-6258), [CVE-2019-20084](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-20084)
-- TRENDNet: [CVE-2019-11399](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-11399), [CVE-2019-11400](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-11400)
+- D-Link: [CVE-2018-20114](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-20114),
+          [CVE-2018-19986](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19986---hnap1setroutersettings),
+          [CVE-2018-19987](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19987---hnap1setaccesspointmode),
+          [CVE-2018-19988](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19988---hnap1setclientinfodemo),
+          [CVE-2018-19989](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19989---hnap1setqossettings),
+          [CVE-2018-19990](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19990---hnap1setwifiverifyalpha),
+          [CVE-2019-6258](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-6258),
+          [CVE-2019-20084](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-20084)
+- TRENDNet: [CVE-2019-11399](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-11399),
+            [CVE-2019-11400](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-11400)
 
 # Authors
 This research project has been conducted by [SysSec Lab](https://syssec.kr) at KAIST.
