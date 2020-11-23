@@ -1,0 +1,3 @@
+[submodule "analyses/routersploit"]
+	path = analyses/routersploit
+	url = https://github.com/threat9/routersploit

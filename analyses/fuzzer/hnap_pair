@@ -1,0 +1,58 @@
+# SetDynamicDNSSettings
+Enabled=true
+ServerAddress=192.168.0.1
+Hostname=hostname
+Username=username
+Password=password
+Timeout=24
+
+# SetDynamicDNSIPv6Settings
+Status=Enabled
+IPv6Address=2001::1
+# already exist: Hostname=hostname
+
+# SetDLNA
+DeviceName=devicename
+
+# SetTimeSettings
+CurrentDate=
+CurrentTime=
+NTP=true
+NTPServer=ntpserver
+TimeZone=67
+DaylightSaving=false
+DSTStartMonth=
+DSTStartWeek=
+DSTStartDayOfWeek=
+DSTStartTime=
+DSTEndMonth=
+DSTEndWeek=
+DSTEndDayOfWeek=
+DSTEndTime=
+
+# SetClientInfoDemo
+MacAddress=11:22:33:44:55:66
+ReserveIP=192.168.0.1
+
+# SetAdministrationSettings
+HTTPS=true
+RemoteMgt=true
+RmoeteMgtPort=8080
+RemoteMgtHTTPS=true
+InboundFilter=
+
+# GetSiteSurvey
+RadioID=RADIO_2.4GHz
+
+# GetMultipleSSID
+# RadioID=RADIO_2.4GHz
+MSSIDIndex=0
+
+# SetInternetProfileAlpha
+IPAddress=192.168.0.1
+Gateway=192.168.0.1
+SubnetMask=255.255.255.0
+Primary=8.8.8.8
+Secondary=8.8.4.4
+UserName=username
+Mac=11:22:33:44:55:66
