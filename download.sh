@@ -20,7 +20,7 @@ echo "Downloading kernel 4.1 (ARM)..."
 download https://github.com/pr0v3rbs/FirmAE_kernel-v4.1/releases/download/v1.0/zImage.armel
 
 echo "Downloading busybox..."
-download https://github.com/pr1v3rbs/FirmAE/releases/download/v1.0/busybox.armel
+download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/busybox.armel
 download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/busybox.mipseb
 download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/busybox.mipsel
 
@@ -38,17 +38,17 @@ download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/libnvram_ioct
 download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/libnvram_ioctl.so.mipsel
 
 echo "Downloading gdb..."
-download https://github.com/pr1v3rbs/FirmAE/releases/download/v1.0/gdb.armel
+download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/gdb.armel
 download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/gdb.mipseb
 download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/gdb.mipsel
 
 echo "Downloading gdbserver..."
-download https://github.com/pr1v3rbs/FirmAE/releases/download/v1.0/gdbserver.armel
+download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/gdbserver.armel
 download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/gdbserver.mipseb
 download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/gdbserver.mipsel
 
 echo "Downloading strace..."
-download https://github.com/pr1v3rbs/FirmAE/releases/download/v1.0/strace.armel
+download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/strace.armel
 download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/strace.mipseb
 download https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/strace.mipsel
 
