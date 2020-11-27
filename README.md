@@ -24,24 +24,24 @@ $ ./download.sh
 $ ./install.sh
 ```
 
-4. Run `init.sh` script.
+# Usage
+
+1. Run `init.sh` script.
 ```
 $ ./init.sh
 ```
 
-# Usage
-
-1. Prepare a firmware.
+2. Prepare a firmware.
 ```
 $ wget ftp://ftp.dlink.eu/Products/dir/dir-868l/driver_software/DIR-868L_fw_revB_2-05b02_eu_multi_20161117.zip
 ```
 
-2. Check emulation
+3. Check emulation
 ```
 $ sudo ./run.sh -c <brand> <firmware>
 ```
 
-3. Run analysis
+4. Run analysis
 ```
 $ sudo ./run.sh -a <brand> <firmware>
 ```
