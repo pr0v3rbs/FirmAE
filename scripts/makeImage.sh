@@ -127,8 +127,8 @@ chmod a+x "${IMAGE_DIR}/bin/a"
 if (! ${FIRMAE_ETC}); then
   sed -i 's/sleep 60/sleep 15/g' "${IMAGE_DIR}/firmadyne/network.sh"
   sed -i 's/sleep 120/sleep 30/g' "${IMAGE_DIR}/firmadyne/run_service.sh"
-  sed -i 's@/firmadyne/sh@/bin/sh@g' "${IMAGE_DIR}/firmadyne/{preInit.sh,network.sh,run_service.sh}"
-  sed -i 's@BUSYBOX=/firmadyne/busybox@BUSYBOX=@g' "${IMAGE_DIR}/firmadyne/{preInit.sh,network.sh,run_service.sh}"
+  sed -i 's@/firmadyne/sh@/bin/sh@g' ${IMAGE_DIR}/firmadyne/{preInit.sh,network.sh,run_service.sh}
+  sed -i 's@BUSYBOX=/firmadyne/busybox@BUSYBOX=@g' ${IMAGE_DIR}/firmadyne/{preInit.sh,network.sh,run_service.sh}
 fi
 
 echo "----Unmounting QEMU Image----"
