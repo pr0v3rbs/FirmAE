@@ -30,3 +30,4 @@ echo '[*] fuzzer'
 echo '[*] rsf'
 cd routersploit && timeout --preserve-status --signal SIGINT 300 ./rsf.py $TARGET > ../$LOG_DIR/rsf && cd -
 echo '[*] analyzer finished'
+echo true > ${LOG_DIR}/result

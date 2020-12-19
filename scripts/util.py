@@ -16,14 +16,17 @@ def io_md5(target):
         return hasher.hexdigest()
 
 def query_(query, psql_ip):
-    dbh = psycopg2.connect(database="firmware",
-                           user="firmadyne",
-                           password="firmadyne",
-                           host=psql_ip)
-    cur = dbh.cursor()
-    cur.execute(query)
+    try:
+        dbh = psycopg2.connect(database="firmware",
+                               user="firmadyne",
+                               password="firmadyne",
+                               host=psql_ip)
+        cur = dbh.cursor()
+        cur.execute(query)
+        return cur.fetchone()
 
-    return cur.fetchone()
+    except:
+        return None
 
 def get_iid(infile, psql_ip):
     md5 = io_md5(infile)
@@ -33,7 +36,7 @@ def get_iid(infile, psql_ip):
     if image_id:
         return image_id[0]
     else:
-        return -1
+        return ""
 
 def get_brand(infile, psql_ip):
     md5 = io_md5(infile)

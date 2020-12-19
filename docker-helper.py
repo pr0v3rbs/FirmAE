@@ -16,8 +16,8 @@ coloredlogs.install(level=logging.INFO)
 
 
 class docker_helper:
-    def __init__(self, firmadyne_root, remove_image=False):
-        self.firmadyne_root = firmadyne_root
+    def __init__(self, firmae_root, remove_image=False):
+        self.firmae_root = firmae_root
         self.count = 0
         self.last_core = None
         self.__sync_status()
@@ -41,9 +41,7 @@ class docker_helper:
     def stop_core(self, container_name):
         return sp.check_output("docker stop {}".format(container_name), shell=True)
 
-    def run_core(self, idx, option, brand, firmware_path):
-        result = False
-
+    def run_core(self, idx, mode, brand, firmware_path):
         firmware_root = os.path.dirname(firmware_path)
         firmware = os.path.basename(firmware_path)
         docker_name = 'docker{}_{}'.format(idx, firmware)
@@ -53,7 +51,7 @@ class docker_helper:
                 -v {1}:/work/firmwares \\
                 --privileged=true \\
                 --name {2} \\
-                fcore""".format(self.firmadyne_root,
+                fcore""".format(self.firmae_root,
                                 firmware_root,
                                 docker_name)
 
@@ -61,54 +59,75 @@ class docker_helper:
         logging.info("[*] {} emulation start!".format(docker_name))
         time.sleep(5)
 
-        cmd = "docker exec -it \"{0}\" ".format(docker_name)
+        cmd = "docker exec -id \"{0}\" ".format(docker_name)
         cmd += "bash -c \"cd /work/FirmAE && "
-        cmd += "./run.sh {0} {1} /work/firmwares/{2} ".format(option,
+        cmd += "./run.sh {0} {1} /work/firmwares/{2} ".format(mode,
                                                               brand,
                                                               firmware)
         cmd += "2>&1 > /work/FirmAE/scratch/{0}.log".format(firmware)
-        cmd += "\""
+        cmd += "\" &"
 
         t0 = time.time()
         iid = -1
-        try:
-            sp.check_output(cmd, shell=True)
-            while iid == -1:
-                time.sleep(1)
-                iid = util.get_iid(firmware_path, "127.0.0.1")
-            result = self.check_result(firmware, docker_name, iid)
-        except:
-            pass
+        sp.check_output(cmd, shell=True)
+        while iid == -1:
+            time.sleep(1)
+            iid = util.get_iid(firmware_path, "127.0.0.1")
 
-        time_elapsed = time.time() - t0
-        if iid != -1:
-            work_dir = os.path.join(self.firmadyne_root, "scratch", str(iid))
-            if os.path.exists(work_dir):
-                with open(os.path.join(work_dir, 'time_elapsed'), 'w') as f:
-                    f.write("%0.4f\n" % (time_elapsed))
-                os.rename(os.path.join(self.firmadyne_root, 'scratch',
-                                       "{0}.log".format(firmware)),
-                          os.path.join(work_dir, "{0}.log".format(firmware)))
+        # maybe connection error from a container to the host psql
+        if not iid:
+            logging.info("[-] %s getting iid failed.", docker_name)
+            return docker_name
 
-                with open(os.path.join(work_dir, 'fullname'), 'w') as f:
-                    f.write("%s\n" % (firmware_path))
-
-                if self.remove_image:
-                    image_name = os.path.join(work_dir, 'image.raw')
-                    if os.path.exists(image_name):
-                        os.remove(image_name)
-
-            image_name = os.path.join(self.firmadyne_root, "images",
-                                      "{0}.tar.gz".format(iid))
-            if os.path.exists(image_name):
-                os.remove(image_name)
-
-        if result:
-            logging.info("[+] %s finished. (%0.4fs)", docker_name, time_elapsed)
+        # check success of extractor
+        tgz_path = os.path.join(self.firmae_root, "images", str(iid) + ".tar.gz")
+        for i in range(300):
+            time.sleep(1)
+            if os.path.exists(tgz_path):
+                break
         else:
-            logging.info("[-] %s failed. (%0.4fs)", docker_name, time_elapsed)
+            logging.info("[-] %s extraction failed.", docker_name)
+            return docker_name
 
-        return result, docker_name
+        # check
+        emulation_result = self.check_result(firmware, docker_name, brand, iid, True)
+        time_elapsed = time.time() - t0
+
+        work_dir = os.path.join(self.firmae_root, "scratch", str(iid))
+        if os.path.exists(work_dir):
+            with open(os.path.join(work_dir, 'time_elapsed'), 'w') as f:
+                f.write("%0.4f\n" % (time_elapsed))
+
+            os.rename(os.path.join(self.firmae_root, 'scratch',
+                                   "{0}.log".format(firmware)),
+                      os.path.join(work_dir, "{0}.log".format(firmware)))
+
+            with open(os.path.join(work_dir, 'fullname'), 'w') as f:
+                f.write("%s\n" % (firmware_path))
+
+            if self.remove_image:
+                image_name = os.path.join(work_dir, 'image.raw')
+                if os.path.exists(image_name):
+                    os.remove(image_name)
+
+        if emulation_result:
+            logging.info("[+] %s emulation finished. (%0.4fs)", docker_name, time_elapsed)
+
+            # analyses
+            if mode == "-a":
+                t1 = time.time()
+                analyses_result = self.check_result(firmware, docker_name, brand, iid, False)
+                time_elapsed = time.time() - t1
+
+                if analyses_result:
+                    logging.info("[+] %s analysis finished. (%0.4fs)", docker_name, time_elapsed)
+                else:
+                    logging.info("[-] %s analysis failed. (%0.4fs)", docker_name, time_elapsed)
+
+        else:
+            logging.info("[-] %s emulation failed. (%0.4fs)", docker_name, time_elapsed)
+
+        return docker_name
 
     def run_command(self, core, cmd):
         result = '[-] failed'
@@ -129,23 +148,28 @@ class docker_helper:
 
         return result
 
-    def check_result(self, firmware, docker_name, iid):
-        for i in range(360):
-            time.sleep(10)
-            result = sp.check_output('ps -ax | grep {} | grep "/bin/bash ./run.sh"'.format(firmware), shell=True).decode().strip()
-            if result.find('/work/firmwares') != -1:
+    def check_result(self, firmware, docker_name, brand, iid, is_emulation=True):
+        if is_emulation:
+            result_path = "{}/scratch/{}/result".format(self.firmae_root, iid)
+            timeout = 2400
+        else:
+            result_path = "{}/analyses/analyses_log/{}/{}/result".format(self.firmae_root, brand, iid)
+            timeout = 3600
+
+        for i in range(timeout):
+            time.sleep(1)
+
+            if not os.path.exists(result_path):
                 continue
 
-            try:
-                result = sp.check_output('docker exec -it {} bash -c "cat /work/FirmAE/scratch/{}/result"'.format(docker_name, iid), shell=True).decode().strip()
-                #logging.info('[*] {} finished'.format(docker_name))
+            with open(result_path) as f:
+                result = f.read().strip()
                 if result == "true":
                     return True
                 else:
                     return False
-            except:
-                logging.error('[-] {} crashed'.format(docker_name))
-                return False
+
+        return False
 
     def get_docker_tap_ip(self, docker_name):
         result = 'None'
@@ -162,9 +186,9 @@ def print_usage(argv0):
     return
 
 def runner(args):
-    (idx, dh, option, brand, firmware) = args
+    (idx, dh, mode, brand, firmware) = args
     if os.path.isfile(firmware):
-        result, docker_name = dh.run_core(idx, option, brand, firmware)
+        docker_name = dh.run_core(idx, mode, brand, firmware)
         dh.stop_core(docker_name)
     else:
         logging.error("[-] Can't find firmware file")
@@ -174,22 +198,22 @@ def main():
         print_usage(sys.argv[0])
         exit(1)
 
-    firmadyne_root=os.path.abspath('.')
-    dh = docker_helper(firmadyne_root, remove_image=True)
+    firmae_root=os.path.abspath('.')
+    dh = docker_helper(firmae_root, remove_image=False)
 
     if sys.argv[1] in ['-ec', '-ea']:
         if len(sys.argv) < 4:
             print_usage(sys.argv[0])
             exit(1)
 
-        if not os.path.exists(os.path.join(firmadyne_root, "scratch")):
-            os.mkdir(os.path.join(firmadyne_root, "scratch"))
+        if not os.path.exists(os.path.join(firmae_root, "scratch")):
+            os.mkdir(os.path.join(firmae_root, "scratch"))
 
         brand = sys.argv[2]
-        option = '-' + sys.argv[1][-1]
+        mode = '-' + sys.argv[1][-1]
         firmware_path = os.path.abspath(sys.argv[3])
         if os.path.isfile(firmware_path) and not firmware_path.endswith('.list'):
-            argv = (0, dh, option, brand, firmware_path)
+            argv = (0, dh, mode, brand, firmware_path)
             runner(argv)
 
         elif os.path.isfile(firmware_path) and firmware_path.endswith('.list') \
@@ -216,7 +240,7 @@ def main():
 
             p = mp.Pool(num_cores)
             for idx, firmware in enumerate(firmwares):
-                arg=(idx, dh, option, brand, firmware)
+                arg=(idx, dh, mode, brand, firmware)
                 p.apply_async(runner, args=(arg,))
                 time.sleep(1)
             p.close()

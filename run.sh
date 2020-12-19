@@ -65,24 +65,22 @@ if (! id | egrep -sqi "root"); then
   exit 1
 fi
 
-BRAND_GLOBAL=${2}
+BRAND=${2}
 WORK_DIR=""
 IID=-1
-RESULT=""
 
 function run_emulation()
 {
     echo "[*] ${1} emulation start!!!"
     INFILE=${1}
-    BRAND=`get_brand ${INFILE} ${BRAND_GLOBAL}`
+    BRAND=`get_brand ${INFILE} ${BRAND}`
     FILENAME=`basename ${INFILE%.*}`
     PING_RESULT=false
     WEB_RESULT=false
     IP=''
-    RESULT=false
 
     if [ ${BRAND} = "auto" ]; then
-      RESULT="invalid brand!"
+      echo -e "[\033[31m-\033[0m] Invalid brand ${INFILE}"
       return
     fi
 
@@ -90,12 +88,16 @@ function run_emulation()
     # extract firmwares
     # ================================
     t_start="$(date -u +%s.%N)"
-    # TODO: check timeout for whole run.sh
     timeout --preserve-status --signal SIGINT 300 \
         ./sources/extractor/extractor.py -b $BRAND -sql $PSQL_IP -np $INFILE images \
         2>&1 >/dev/null
 
     IID=`./scripts/util.py get_iid $INFILE $PSQL_IP`
+    if [ ! "${IID}" ]; then
+        echo -e "[\033[31m-\033[0m] extractor.py failed!"
+        return
+    fi
+
     WORK_DIR=`get_scratch ${IID}`
     mkdir -p ${WORK_DIR}
     chmod a+rwx "${WORK_DIR}"
@@ -108,7 +110,6 @@ function run_emulation()
     #TODO: check the result once again for non-duplicates
     # Currently, if there exists a result file, we just stop checking.
     if [ ${OPTION} = "check" ] && [ -e ${WORK_DIR}/result ]; then
-        RESULT=`cat ${WORK_DIR}/result`
         return
         # DK:do we have to restart if it failed?
 #        if (! egrep -sqi "true" ${WORK_DIR}/result); then
@@ -120,7 +121,7 @@ function run_emulation()
 
     if [ ! -e ./images/$IID.tar.gz ]; then
         echo -e "[\033[31m-\033[0m] Extracting root filesystem failed!"
-        RESULT="extraction fail"
+        echo "extraction fail" > ${WORK_DIR}/result
         return
     fi
 
@@ -142,12 +143,12 @@ function run_emulation()
 
     if [ ! "${ARCH}" ]; then
         echo -e "[\033[31m-\033[0m] Get architecture failed!"
-        RESULT="get architecture fail"
+        echo "get architecture fail" > ${WORK_DIR}/result
         return
     fi
     if ( check_arch ${ARCH} == 0 ); then
         echo -e "[\033[31m-\033[0m] Unknown architecture! - ${ARCH}"
-        RESULT="not valid architecture : ${ARCH}"
+        echo "not valid architecture : ${ARCH}" > ${WORK_DIR}/result
         return
     fi
 
@@ -210,7 +211,9 @@ function run_emulation()
     fi
     if ($WEB_RESULT); then
         echo -e "[\033[32m+\033[0m] Web service on ${IP}"
-        RESULT=true
+        echo true > ${WORK_DIR}/result
+    else
+        echo false > ${WORK_DIR}/result
     fi
 
     if [ ${OPTION} = "analyze" ]; then
@@ -279,14 +282,12 @@ fi
 
 if [ ! -d ${FIRMWARE} ]; then
     run_emulation ${FIRMWARE}
-    echo ${RESULT} > ${WORK_DIR}/result
 else
     FIRMWARES=`find ${3} -type f`
 
     for FIRMWARE in ${FIRMWARES}; do
         if [ ! -d ${FIRMWARE} ]; then
             run_emulation ${FIRMWARE}
-            echo ${RESULT} > ${WORK_DIR}/result
         fi
     done
 fi

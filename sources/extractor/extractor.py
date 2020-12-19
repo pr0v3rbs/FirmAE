@@ -732,6 +732,19 @@ class ExtractionItem(object):
                         count += 1
         return False
 
+def psql_check(psql_ip):
+    try:
+        import psycopg2
+        psycopg2.connect(database="firmware",
+                         user="firmadyne",
+                         password="firmadyne",
+                         host=psql_ip)
+
+        return True
+
+    except:
+        return False
+
 def main():
     parser = argparse.ArgumentParser(description="Extracts filesystem and \
         kernel from Linux-based firmware images")
@@ -755,10 +768,11 @@ def main():
                         help="Print debug information")
     result = parser.parse_args()
 
-    extract = Extractor(result.input, result.output, result.rootfs,
-                        result.kernel, result.parallel, result.sql,
-                        result.brand, result.debug)
-    extract.extract()
+    if psql_check(result.sql):
+        extract = Extractor(result.input, result.output, result.rootfs,
+                            result.kernel, result.parallel, result.sql,
+                            result.brand, result.debug)
+        extract.extract()
 
 if __name__ == "__main__":
     main()
