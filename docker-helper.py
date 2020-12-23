@@ -70,13 +70,20 @@ class docker_helper:
         t0 = time.time()
         iid = -1
         sp.check_output(cmd, shell=True)
+        firmware_log = os.path.join(self.firmae_root, "scratch", firmware + ".log")
+
+        time.sleep(10)
         while iid == -1:
             time.sleep(1)
             iid = util.get_iid(firmware_path, "127.0.0.1")
+            with open(firmware_log) as f:
+                last_line = f.read().split()[-2]
+                if last_line.find("container failed") != -1:
+                    logging.error("[-] %s container failed to connect to the hosts' postgresql")
+                    return docker_name
 
-        # maybe connection error from a container to the host psql
         if not iid:
-            logging.info("[-] %s getting iid failed.", docker_name)
+            logging.error("[-] %s getting iid failed.", docker_name)
             return docker_name
 
         # check success of extractor
@@ -86,7 +93,7 @@ class docker_helper:
             if os.path.exists(tgz_path):
                 break
         else:
-            logging.info("[-] %s extraction failed.", docker_name)
+            logging.error("[-] %s extraction failed.", docker_name)
             return docker_name
 
         # check
@@ -122,10 +129,10 @@ class docker_helper:
                 if analyses_result:
                     logging.info("[+] %s analysis finished. (%0.4fs)", docker_name, time_elapsed)
                 else:
-                    logging.info("[-] %s analysis failed. (%0.4fs)", docker_name, time_elapsed)
+                    logging.error("[-] %s analysis failed. (%0.4fs)", docker_name, time_elapsed)
 
         else:
-            logging.info("[-] %s emulation failed. (%0.4fs)", docker_name, time_elapsed)
+            logging.error("[-] %s emulation failed. (%0.4fs)", docker_name, time_elapsed)
 
         return docker_name
 

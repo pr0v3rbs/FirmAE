@@ -53,6 +53,17 @@ def get_brand(infile, psql_ip):
     else:
         return ""
 
+def check_connection(psql_ip):
+    try:
+        dbh = psycopg2.connect(database="firmware",
+                               user="firmadyne",
+                               password="firmadyne",
+                               host=psql_ip)
+        dbh.close()
+        return 0
+    except:
+        return 1
+
 # command line
 if __name__ == '__main__':
     [infile, psql_ip] = sys.argv[2:4]
@@ -60,3 +71,5 @@ if __name__ == '__main__':
         print(get_iid(infile, psql_ip))
     if sys.argv[1] == 'get_brand':
         print(get_brand(infile, psql_ip))
+    if sys.argv[1] == 'check_connection':
+        exit(check_connection(psql_ip))

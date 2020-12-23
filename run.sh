@@ -84,6 +84,13 @@ function run_emulation()
       return
     fi
 
+    if [ -n "${FIRMAE_DOCKER-}" ]; then
+      if ( ! ./scripts/util.py check_connection _ $PSQL_IP ); then
+        echo -e "[\033[31m-\033[0m] docker container failed to connect to the hosts' postgresql!"
+        return
+      fi
+    fi
+
     # ================================
     # extract firmwares
     # ================================
