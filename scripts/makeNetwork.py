@@ -60,6 +60,13 @@ echo "%(NETWORK_TYPE)s" > ${WORK_DIR}/image/firmadyne/network_type
 echo "%(NET_BRIDGE)s" > ${WORK_DIR}/image/firmadyne/net_bridge
 echo "%(NET_INTERFACE)s" > ${WORK_DIR}/image/firmadyne/net_interface
 
+echo "#!/firmadyne/sh" > ${WORK_DIR}/image/firmadyne/debug.sh
+if (echo ${RUN_MODE} | grep -q "debug"); then
+    echo "while (true); do /firmadyne/busybox nc -lp 31337 -e /firmadyne/sh; done &" >> ${WORK_DIR}/image/firmadyne/debug.sh
+    echo "/firmadyne/busybox telnetd -p 31338 -l /firmadyne/sh" >> ${WORK_DIR}/image/firmadyne/debug.sh
+fi
+chmod a+x ${WORK_DIR}/image/firmadyne/debug.sh
+
 sleep 1
 sync
 umount ${WORK_DIR}/image > /dev/null
@@ -502,6 +509,7 @@ def inferNetwork(iid, arch, endianness, init):
     if out:
         out.write('\n/firmadyne/network.sh &\n')
         out.write('/firmadyne/run_service.sh &\n')
+        out.write('/firmadyne/debug.sh\n')
         # trendnet TEW-828DRU_1.0.7.2, etc...
         out.write('sleep 36000\n')
         out.close()
