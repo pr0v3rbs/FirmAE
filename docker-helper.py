@@ -72,6 +72,11 @@ class docker_helper:
         sp.check_output(cmd, shell=True)
         firmware_log = os.path.join(self.firmae_root, "scratch", firmware + ".log")
 
+        if mode in ["-r", "-d"]:
+            cmd = "docker exec -it \"{0}\" bash".format(docker_name)
+            os.system(cmd)
+            return docker_name
+
         time.sleep(10)
         while iid == -1:
             time.sleep(1)
@@ -255,6 +260,17 @@ def main():
 
             logging.info("[*] Processing %d firmware done. (%0.4fs)",
                          len(firmwares), time.time() - t0)
+
+    elif sys.argv[1] in ['-er', '-ed']:
+        if len(sys.argv) < 3:
+            print_usage(sys.argv[0])
+            exit(1)
+
+        mode = '-' + sys.argv[1][-1]
+        firmware_path = os.path.abspath(sys.argv[2])
+        if os.path.isfile(firmware_path):
+            argv = (0, dh, mode, "auto", firmware_path)
+            runner(argv)
 
     elif sys.argv[1] == '-c':
         if len(sys.argv) != 3:

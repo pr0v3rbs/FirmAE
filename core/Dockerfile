@@ -3,7 +3,7 @@ MAINTAINER Mingeun Kim <pr0v3rbs@kaist.ac.kr>, Minkyo Seo <0xsaika@gmail.com>
 
 RUN apt-get update && apt-get -y dist-upgrade
 RUN apt-get install -y apt-utils
-RUN apt-get install -y wget bc psmisc ruby
+RUN apt-get install -y wget bc psmisc ruby telnet
 RUN apt-get install -y net-tools iputils-ping iptables iproute2 curl
 RUN apt-get install -yy python3 python3-pip
 
