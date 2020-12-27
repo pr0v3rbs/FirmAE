@@ -10,40 +10,47 @@ By running our tool on the succesfully emulation firmware images, we discovered 
 Note that we tested FirmAE on Ubuntu 18.04.
 
 1. Clone `FirmAE`
-```
+```console
 $ git clone --recursive https://github.com/pr0v3rbs/FirmAE
 ```
 
 2. Run `download.sh` script.
-```
+```console
 $ ./download.sh
 ```
 
 3. Run `install.sh` script.
-```
+```console
 $ ./install.sh
 ```
 
 # Usage
 
 1. Run `init.sh` script.
-```
+```console
 $ ./init.sh
 ```
 
 2. Prepare a firmware.
-```
+```console
 $ wget ftp://ftp.dlink.eu/Products/dir/dir-868l/driver_software/DIR-868L_fw_revB_2-05b02_eu_multi_20161117.zip
 ```
 
 3. Check emulation
-```
+```console
 $ sudo ./run.sh -c <brand> <firmware>
 ```
 
 4. Run analysis
-```
+```console
 $ sudo ./run.sh -a <brand> <firmware>
+```
+
+## Debug
+
+After a firmware image successfully emulated.
+```console
+$ sudo ./run.sh -d <brand> <firmware>
 ```
 
 ## Turn on/off arbitration
@@ -63,17 +70,26 @@ if (${FIRMAE_ETC}); then
   TIMEOUT=240
 ```
 
-## Parallel mode
+## Docker
 
 First, prepare a docker image.
-```
+```console
 $ sudo ./docker-init.sh
 ```
 
+### Parallel mode
+
 Then, run one of the below commands. ```-ec``` checks only the emulation, and ```-ea``` checks the emulation and analyzes vulnerabilities.
-```
+```console
 $ sudo ./docker-helper.py -ec <brand> <firmware>
 $ sudo ./docker-helper.py -ea <brand> <firmware>
+```
+
+### Debug mode
+
+After a firmware image successfully emulated.
+```console
+$ sudo ./docker-helper.py -ed <firmware>
 ```
 
 # CVEs
