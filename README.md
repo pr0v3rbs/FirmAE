@@ -92,6 +92,10 @@ After a firmware image successfully emulated.
 $ sudo ./docker-helper.py -ed <firmware>
 ```
 
+# Dataset
+
+Google drive - [download](https://drive.google.com/file/d/12m9knf9MBBmwhuYEm3CIszZI2vZNrYNJ/view?usp=sharing)
+
 # CVEs
 
 - ASUS: [CVE-2019-20082](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-20082)
