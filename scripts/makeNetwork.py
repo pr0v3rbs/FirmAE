@@ -511,7 +511,7 @@ def inferNetwork(iid, arch, endianness, init):
         out.write('/firmadyne/run_service.sh &\n')
         out.write('/firmadyne/debug.sh\n')
         # trendnet TEW-828DRU_1.0.7.2, etc...
-        out.write('sleep 36000\n')
+        out.write('/firmadyne/busybox sleep 36000\n')
         out.close()
 
     umountImage(targetDir, loopFile)
