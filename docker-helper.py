@@ -82,7 +82,8 @@ class docker_helper:
             time.sleep(1)
             iid = util.get_iid(firmware_path, "127.0.0.1")
             with open(firmware_log) as f:
-                last_line = f.read().split()[-2]
+                f.readline()
+                last_line = f.readline()
                 if last_line.find("container failed") != -1:
                     logging.error("[-] %s container failed to connect to the hosts' postgresql")
                     return docker_name
