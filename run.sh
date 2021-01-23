@@ -92,11 +92,11 @@ function run_emulation()
     fi
 
     # ================================
-    # extract firmwares
+    # extract filesystem from firmware
     # ================================
     t_start="$(date -u +%s.%N)"
     timeout --preserve-status --signal SIGINT 300 \
-        ./sources/extractor/extractor.py -b $BRAND -sql $PSQL_IP -np $INFILE images \
+        ./sources/extractor/extractor.py -b $BRAND -sql $PSQL_IP -np -nk $INFILE images \
         2>&1 >/dev/null
 
     IID=`./scripts/util.py get_iid $INFILE $PSQL_IP`
@@ -104,6 +104,13 @@ function run_emulation()
         echo -e "[\033[31m-\033[0m] extractor.py failed!"
         return
     fi
+
+    # ================================
+    # extract kernel from firmware
+    # ================================
+    timeout --preserve-status --signal SIGINT 300 \
+        ./sources/extractor/extractor.py -b $BRAND -sql $PSQL_IP -np -nf $INFILE images \
+        2>&1 >/dev/null
 
     WORK_DIR=`get_scratch ${IID}`
     mkdir -p ${WORK_DIR}
