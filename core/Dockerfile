@@ -6,6 +6,7 @@ RUN apt-get install -y apt-utils
 RUN apt-get install -y wget bc psmisc ruby telnet
 RUN apt-get install -y net-tools iputils-ping iptables iproute2 curl
 RUN apt-get install -yy python3 python3-pip
+RUN python3 -m pip install --upgrade pip
 
 RUN apt-get install -y libpq-dev
 RUN python3 -m pip install psycopg2 psycopg2-binary
