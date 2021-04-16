@@ -279,6 +279,7 @@ function run_emulation()
         # ================================
         # just run mode
         # ================================
+        check_network ${IP} false &
         ${WORK_DIR}/run.sh
     fi
 
