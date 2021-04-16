@@ -26,7 +26,7 @@ $ ./install.sh
 
 # Usage
 
-1. Run `init.sh` script.
+1. Execute `init.sh` script.
 ```console
 $ ./init.sh
 ```
@@ -41,10 +41,16 @@ $ wget ftp://ftp.dlink.eu/Products/dir/dir-868l/driver_software/DIR-868L_fw_revB
 $ sudo ./run.sh -c <brand> <firmware>
 ```
 
-4. Run analysis
-```console
-$ sudo ./run.sh -a <brand> <firmware>
-```
+4. Analyze the target firmware
+    * Analysis mode uses the FirmAE analyzer
+    ```console
+    $ sudo ./run.sh -a <brand> <firmware>
+    ```
+
+    * Run mode helps to test web service or execute custom analyzer
+    ```console
+    $ sudo ./run.sh -r <brand> <firmware>
+    ```
 
 ## Debug
 
