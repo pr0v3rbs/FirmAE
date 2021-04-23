@@ -27,6 +27,9 @@ sudo apt-get install -y binwalk mtd-utils gzip bzip2 tar arj lhasa p7zip p7zip-f
 git clone https://github.com/devttys0/sasquatch && (cd sasquatch && ./build.sh && cd -)
 git clone https://github.com/devttys0/yaffshiv && (cd yaffshiv && sudo python3 setup.py install)
 sudo cp core/unstuff /usr/local/bin/
+sudo cp core/cramfsck /usr/local/bin/
+sudo cp core/sasquatch /usr/local/bin/
+sudo cp core/yaffshiv /usr/local/bin/
 
 sudo apt-get install -y liblzo2-dev
 sudo python3 -m pip install python-lzo cstruct git+https://github.com/sviehb/jefferson ubi_reader
