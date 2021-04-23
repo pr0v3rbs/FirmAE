@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sudo apt-get update
-sudo apt-get install -y curl wget git ruby python3 python3-pip
+sudo apt-get install -y curl wget git ruby python3 python3-pip bc
 python3 -m pip install coloredlogs
 
 # for docker
