@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os.path
 import subprocess
+import signal
 import sys
 import time
 import telnetlib
@@ -8,7 +9,7 @@ import pdb
 from socket import *
 
 
-class firmadyne_helper():
+class firmae_helper():
     def __init__(self, iid):
         self.iid = int(iid)
         self.targetName = open('./scratch/%d/name' % iid).read().strip()
@@ -42,6 +43,9 @@ class firmadyne_helper():
             time.sleep(0.1)
         self.telnetInit = True
 
+    def connect_socat(self):
+        subprocess.call(['sudo', 'socat', '-', 'UNIX-CONNECT:/tmp/qemu.' + str(self.iid) + '.S1'])
+
     def connect_shell(self):
         if not self.telnetInit:
             self.initalize_telnet()
@@ -71,7 +75,13 @@ class firmadyne_helper():
         print('[+] run target "remote %s:%d" in host gdb' % (self.targetIP, PORT))
         self.send('/firmadyne/gdbserver %s:%d --attach %s\n'%(self.targetIP, PORT, PID))
 
+
+def signal_handler(sig, frame):
+    return
+
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, signal_handler)
+
     if sys.version[:1] != '3':
         #check python version is 3.X.X
         print('error : python version should be 3.X.X')
@@ -88,19 +98,20 @@ if __name__ == '__main__':
         exit(-1)
 
     #initialize helper
-    fh = firmadyne_helper(int(sys.argv[1]))
+    fh = firmae_helper(int(sys.argv[1]))
     fh.show_info()
     fh.connect()
 
     def menu():
         print('------------------------------')
-        print('  Firmadyne-EX Debugger v1.0')
+        print('|       FirmAE Debugger      |')
         print('------------------------------')
-        print('1. connect to shell')
-        print('2. tcpdump')
-        print('3. run gdbserver')
-        print('4. file transfer')
-        print('5. exit')
+        print('1. connect to socat')
+        print('2. connect to shell')
+        print('3. tcpdump')
+        print('4. run gdbserver')
+        print('5. file transfer')
+        print('6. exit')
 
     while 1:
         menu()
@@ -113,10 +124,12 @@ if __name__ == '__main__':
             pass
 
         if select == 1:
+            fh.connect_socat()
+        if select == 2:
             fh.connect_shell()
-        elif select == 2:
-            fh.tcpdump()
         elif select == 3:
+            fh.tcpdump()
+        elif select == 4:
             fh.show_processlist()
             try:
                 PID = input('[+] target pid : ')
@@ -124,12 +137,10 @@ if __name__ == '__main__':
                 pass
             else:
                 fh.run_gdbserver(PID)
-        elif select == 4:
+        elif select == 5:
             target_filepath = input('[+] target file path : ')
             fh.file_transfer(target_filepath)
-        elif select == 5:
+        elif select == 6:
             break
-        else:
-            print('error : invaild selection')
         print('\n')
 
