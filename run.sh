@@ -4,10 +4,11 @@ function print_usage()
 {
     echo "Usage: ${0} [mode]... [brand] [firmware|firmware_directory]"
     echo "mode: use one option at once"
-    echo "      -r, --run     : run mode     - run emulation (no quit)"
-    echo "      -c, --check   : check mode   - check network reachable and web access (quit)"
-    echo "      -a, --analyze : analyze mode - analyze vulnerability (quit)"
-    echo "      -d, --debug   : debug mode   - debugging emulation (no quit)"
+    echo "      -r, --run     : run mode         - run emulation (no quit)"
+    echo "      -c, --check   : check mode       - check network reachable and web access (quit)"
+    echo "      -a, --analyze : analyze mode     - analyze vulnerability (quit)"
+    echo "      -d, --debug   : debug mode       - debugging emulation (no quit)"
+    echo "      -b, --boot    : boot debug mode  - kernel boot debugging using QEMU (no quit)"
 }
 
 if [ $# -ne 3 ]; then
@@ -38,6 +39,8 @@ function get_option()
         echo "run"
     elif [ ${OPTION} = "-d" ] || [ ${OPTION} = "--debug" ]; then
         echo "debug"
+    elif [ ${OPTION} = "-b" ] || [ ${OPTION} = "--boot" ]; then
+        echo "boot"
     else
         echo "none"
     fi
@@ -199,10 +202,9 @@ function run_emulation()
         TIMEOUT=$TIMEOUT FIRMAE_NETWORK=${FIRMAE_NETWORK} \
           ./scripts/makeNetwork.py -i $IID -q -o -a ${ARCH} \
           &> ${WORK_DIR}/makeNetwork.log
-        if [ ! -e ${WORK_DIR}/run_debug.sh ]; then
-          ln -s ./run.sh ${WORK_DIR}/run_debug.sh
-          ln -s ./run.sh ${WORK_DIR}/run_analyze.sh
-        fi
+        ln -s ./run.sh ${WORK_DIR}/run_debug.sh | true
+        ln -s ./run.sh ${WORK_DIR}/run_analyze.sh | true
+        ln -s ./run.sh ${WORK_DIR}/run_boot.sh | true
 
         t_end="$(date -u +%s.%N)"
         time_network="$(bc <<<"$t_end-$t_start")"
@@ -281,6 +283,11 @@ function run_emulation()
         # ================================
         check_network ${IP} false &
         ${WORK_DIR}/run.sh
+    elif [ ${OPTION} = "boot" ]; then
+        # ================================
+        # boot debug mode
+        # ================================
+        ${WORK_DIR}/run_boot.sh
     fi
 
     echo "[*] cleanup"
