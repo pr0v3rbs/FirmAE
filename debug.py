@@ -15,24 +15,39 @@ class firmae_helper():
         self.targetName = open('./scratch/%d/name' % iid).read().strip()
         self.targetIP = open('./scratch/%d/ip' % iid).read().strip()
         self.telnetInit = False
+        self.netcatOn = False
 
     def show_info(self):
         print('[*] firmware - %s' % self.targetName)
         print('[*] IP - %s' % self.targetIP)
 
     def connect(self):
-        self.sock = socket(AF_INET, SOCK_STREAM)
-        print('[*] connecting...')
-        self.sock.connect((self.targetIP, 31337))
-        print('[*] connected')
+        if not self.netcatOn:
+            self.sock = socket(AF_INET, SOCK_STREAM)
+            print('[*] connecting to netcat (%s:%d)' % (self.targetIP, 31337))
+            try:
+                self.sock.connect((self.targetIP, 31337))
+            except:
+                print('[-] failed to connect netcat')
+                return
+            self.netcatOn = True
+            print('[+] netcat connected')
 
     def sendrecv(self, cmd):
-        self.sock.send(cmd.encode())
-        time.sleep(1)
-        return self.sock.recv(2048).decode()
+        self.connect()
+
+        if self.netcatOn:
+            self.sock.send(cmd.encode())
+            time.sleep(1)
+            return self.sock.recv(2048).decode()
+        else:
+            return ''
 
     def send(self, cmd):
-        self.sock.send(cmd.encode())
+        self.connect()
+
+        if self.netcatOn:
+            self.sock.send(cmd.encode())
 
     def initalize_telnet(self):
         for command in ['/firmadyne/busybox mkdir -p /proc',
@@ -47,9 +62,12 @@ class firmae_helper():
         subprocess.call(['sudo', 'socat', '-', 'UNIX-CONNECT:/tmp/qemu.' + str(self.iid) + '.S1'])
 
     def connect_shell(self):
-        if not self.telnetInit:
-            self.initalize_telnet()
-        subprocess.call(['telnet',self.targetIP,'31338'])
+        self.connect()
+
+        if self.netcatOn:
+            if not self.telnetInit:
+                self.initalize_telnet()
+            subprocess.call(['telnet',self.targetIP,'31338'])
 
     def show_processlist(self):
         print(self.sendrecv('ps\n'))
