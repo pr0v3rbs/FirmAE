@@ -16,7 +16,12 @@ RUN apt-get install -y busybox-static bash-static fakeroot git kpartx netcat-ope
 # for binwalk
 # bypass tzdata interaction
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get install -y binwalk mtd-utils gzip bzip2 tar arj lhasa p7zip p7zip-full cabextract fusecram cramfsswap squashfs-tools sleuthkit default-jdk cpio lzop lzma srecord zlib1g-dev liblzma-dev liblzo2-dev
+RUN curl -Ls https://api.github.com/repos/ReFirmLabs/binwalk/releases/latest | \
+    grep -wo "\"https.*tarball.*\"" | sed 's/"//g' | wget -qi - -O binwalk.tar.gz && \
+    tar -xf binwalk.tar.gz && \
+    cd ReFirmLabs-binwalk-*/ && \
+    python3 setup.py install
+RUN apt-get install -y mtd-utils gzip bzip2 tar arj lhasa p7zip p7zip-full cabextract fusecram cramfsswap squashfs-tools sleuthkit default-jdk cpio lzop lzma srecord zlib1g-dev liblzma-dev liblzo2-dev
 
 RUN python3 -m pip install python-lzo cstruct git+https://github.com/sviehb/jefferson ubi_reader
 RUN apt-get install -y python3-magic unrar
