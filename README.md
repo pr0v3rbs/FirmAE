@@ -54,9 +54,18 @@ $ sudo ./run.sh -c <brand> <firmware>
 
 ## Debug
 
-After a firmware image successfully emulated.
+After `run.sh -c` finished.
+
+1. User-level basic debugging utility. (Useful when an emulated firmware is network reachable)
+
 ```console
 $ sudo ./run.sh -d <brand> <firmware>
+```
+
+2. Kernel-level boot debugging.
+
+```console
+$ sudo ./run.sh -b <brand> <firmware>
 ```
 
 ## Turn on/off arbitration
