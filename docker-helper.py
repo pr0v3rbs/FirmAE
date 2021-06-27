@@ -162,6 +162,7 @@ class docker_helper:
         return result
 
     def check_result(self, firmware, docker_name, brand, iid, is_emulation=True):
+        time.sleep(10) # wait until re-run
         if is_emulation:
             result_path = "{}/scratch/{}/result".format(self.firmae_root, iid)
             timeout = 2400

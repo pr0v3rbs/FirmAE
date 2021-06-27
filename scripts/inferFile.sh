@@ -12,6 +12,11 @@ if (${FIRMAE_BOOT}); then
     done
   fi
   # kernel not handle this program
+  if [ -e /init ]; then
+    if [ ! -d /init ]; then
+      arr+=(/init)
+    fi
+  fi
   for FILE in `${BUSYBOX} find / -name "preinitMT" -o -name "preinit" -o -name "rcS"`
   do
     arr+=(${FILE})

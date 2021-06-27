@@ -124,16 +124,12 @@ function run_emulation()
     echo $BRAND > ${WORK_DIR}/brand
     sync
 
-    #TODO: check the result once again for non-duplicates
-    # Currently, if there exists a result file, we just stop checking.
     if [ ${OPTION} = "check" ] && [ -e ${WORK_DIR}/result ]; then
-        return
-        # DK:do we have to restart if it failed?
-#        if (! egrep -sqi "true" ${WORK_DIR}/result); then
-#            RESULT=`cat ${WORK_DIR}/result`
-#            return
-#        fi
-#        rm ${WORK_DIR}/result
+        if (egrep -sqi "true" ${WORK_DIR}/result); then
+            RESULT=`cat ${WORK_DIR}/result`
+            return
+        fi
+        rm ${WORK_DIR}/result
     fi
 
     if [ ! -e ./images/$IID.tar.gz ]; then

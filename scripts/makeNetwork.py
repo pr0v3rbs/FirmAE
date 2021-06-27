@@ -514,7 +514,8 @@ def inferNetwork(iid, arch, endianness, init):
 
     if out:
         out.write('\n/firmadyne/network.sh &\n')
-        out.write('/firmadyne/run_service.sh &\n')
+        if webService:
+            out.write('/firmadyne/run_service.sh &\n')
         out.write('/firmadyne/debug.sh\n')
         # trendnet TEW-828DRU_1.0.7.2, etc...
         out.write('/firmadyne/busybox sleep 36000\n')

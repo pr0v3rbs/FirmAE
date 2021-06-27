@@ -694,11 +694,13 @@ class ExtractionItem(object):
             if dir_name:
                 self.printf(">> Recursing into %s ..." % desc)
                 count = 0
-                for root, _, files in os.walk(dir_name):
+                for root, dirs, files in os.walk(dir_name):
                     # sort both descending alphabetical and increasing
                     # length
                     files.sort()
                     files.sort(key=len)
+                    if (not self.extractor.do_rootfs or self.get_rootfs_status()) and 'bin' in dirs and 'lib' in dirs:
+                        break
 
                     # handle case where original file name is restored; put
                     # it to front of queue
