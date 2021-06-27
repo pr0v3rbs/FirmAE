@@ -107,7 +107,14 @@ After a firmware image successfully emulated.
 $ sudo ./docker-helper.py -ed <firmware>
 ```
 
-# Dataset
+# Evaluation
+
+## Emulation result
+
+Google spreadsheet -
+[view](https://docs.google.com/spreadsheets/d/1uVoo8UaH-GhwlqWj5ZDuMS8S3ua0AoHLOkxw8sdwgzY/edit?usp=sharing)
+
+## Dataset
 
 Google drive - [download](https://drive.google.com/file/d/12m9knf9MBBmwhuYEm3CIszZI2vZNrYNJ/view?usp=sharing)
 
