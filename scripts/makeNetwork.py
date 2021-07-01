@@ -82,7 +82,7 @@ del_partition ${DEVICE:0:$((${#DEVICE}-2))}
 
 echo -n "Starting emulation of firmware... "
 %(QEMU_ENV_VARS)s ${QEMU} ${QEMU_BOOT} -m 1024 -M ${QEMU_MACHINE} -kernel ${KERNEL} \\
-    %(QEMU_DISK)s -append "root=${QEMU_ROOTFS} console=ttyS0 nandsim.parts=64,64,64,64,64,64,64,64,64,64 %(QEMU_INIT)s rw debug ignore_loglevel print-fatal-signals=1 FIRMAE_NETWORK=${FIRMAE_NETWORK} FIRMAE_NVRAM=${FIRMAE_NVRAM} FIRMAE_KERNEL=${FIRMAE_KERNEL} FIRMAE_ETC=${FIRMAE_ETC} ${QEMU_DEBUG}" \\
+    %(QEMU_DISK)s -append "root=${QEMU_ROOTFS} console=ttyS0 nandsim.parts=64,64,64,64,64,64,64,64,64,64 %(QEMU_INIT)s rw debug ignore_loglevel print-fatal-signals=1 FIRMAE_NET=${FIRMAE_NET} FIRMAE_NVRAM=${FIRMAE_NVRAM} FIRMAE_KERNEL=${FIRMAE_KERNEL} FIRMAE_ETC=${FIRMAE_ETC} ${QEMU_DEBUG}" \\
     -serial file:${WORK_DIR}/qemu.final.serial.log \\
     -serial unix:/tmp/qemu.${IID}.S1,server,nowait \\
     -monitor unix:/tmp/qemu.${IID},server,nowait \\
@@ -256,7 +256,7 @@ def qemuNetworkConfig(arch, network, isUserNetwork, ports):
     output = []
     assigned = []
     interfaceNum = 4
-    if arch == "arm" and checkVariable("FIRMAE_NETWORK"):
+    if arch == "arm" and checkVariable("FIRMAE_NET"):
         interfaceNum = 1
 
     for i in range(0, interfaceNum):
@@ -320,7 +320,7 @@ echo "Creating TAP device ${TAPDEV_%(I)i}..."
 sudo tunctl -t ${TAPDEV_%(I)i} -u ${USER}
 """
 
-    if checkVariable("FIRMAE_NETWORK"):
+    if checkVariable("FIRMAE_NET"):
         template_vlan = """
 echo "Initializing VLAN..."
 HOSTNETDEV_%(I)i=${TAPDEV_%(I)i}.%(VLANID)i
@@ -445,7 +445,7 @@ def getNetworkList(data, ifacesWithIps, macChanges):
             if config not in networkList:
                 networkList.append(config)
 
-    if checkVariable("FIRMAE_NETWORK"):
+    if checkVariable("FIRMAE_NET"):
         return networkList
     else:
         ips = set()
@@ -557,7 +557,7 @@ def checkNetwork(networkList):
     devList = ["eth0", "eth1", "eth2", "eth3"]
     result = "None"
 
-    if checkVariable("FIRMAE_NETWORK"):
+    if checkVariable("FIRMAE_NET"):
         devs = [dev for (ip, dev, vlan, mac, brif) in networkList]
         devs = set(devs)
         ips = [ip for (ip, dev, vlan, mac, brif) in networkList]
@@ -622,7 +622,7 @@ def checkNetwork(networkList):
             print("[*] no network interface: bring up default network")
             filterNetworkList.append(('192.168.0.1', 'eth0', None, None, "br0"))
             result = "default"
-    else: # if checkVariable("FIRMAE_NETWORK"):
+    else: # if checkVariable("FIRMAE_NET"):
         filterNetworkList = networkList
 
     return filterNetworkList, result # (network_type)

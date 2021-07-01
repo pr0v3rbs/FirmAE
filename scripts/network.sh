@@ -3,7 +3,7 @@
 BUSYBOX=/firmadyne/busybox
 ACTION=`${BUSYBOX} cat /firmadyne/network_type`
 
-if (${FIRMAE_NETWORK}); then
+if (${FIRMAE_NET}); then
   ${BUSYBOX} sleep 10
 
   if [ ${ACTION} == "default" ]; then

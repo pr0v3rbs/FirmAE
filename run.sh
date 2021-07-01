@@ -195,7 +195,7 @@ function run_emulation()
         echo "[*] infer network start!!!"
         # TIMEOUT is set in "firmae.config". This TIMEOUT is used for initial
         # log collection.
-        TIMEOUT=$TIMEOUT FIRMAE_NETWORK=${FIRMAE_NETWORK} \
+        TIMEOUT=$TIMEOUT FIRMAE_NET=${FIRMAE_NET} \
           ./scripts/makeNetwork.py -i $IID -q -o -a ${ARCH} \
           &> ${WORK_DIR}/makeNetwork.log
         ln -s ./run.sh ${WORK_DIR}/run_debug.sh | true
