@@ -20,14 +20,15 @@ RUN curl -Ls https://api.github.com/repos/ReFirmLabs/binwalk/releases/latest | \
     grep -wo "\"https.*tarball.*\"" | sed 's/"//g' | wget -qi - -O binwalk.tar.gz && \
     tar -xf binwalk.tar.gz && \
     cd ReFirmLabs-binwalk-*/ && \
-    python3 setup.py install
+    echo y | ./deps.sh | true
 RUN apt-get install -y mtd-utils gzip bzip2 tar arj lhasa p7zip p7zip-full cabextract fusecram cramfsswap squashfs-tools sleuthkit default-jdk cpio lzop lzma srecord zlib1g-dev liblzma-dev liblzo2-dev
 
-RUN python3 -m pip install python-lzo cstruct git+https://github.com/sviehb/jefferson ubi_reader
+RUN python3 -m pip install python-lzo cstruct ubi_reader
 RUN apt-get install -y python3-magic unrar
 
 RUN apt-get install -y openjdk-8-jdk
 RUN python3 -m pip install git+https://github.com/ReFirmLabs/binwalk
+RUN git clone https://github.com/devttys0/sasquatch && (cd sasquatch && ./build.sh && cd -)
 
 # for qemu
 RUN apt-get install -y qemu-system-arm qemu-system-mips qemu-system-x86 qemu-utils
@@ -47,9 +48,6 @@ RUN chmod 777 /usr/bin/sudo
 
 RUN mkdir -p /work/FirmAE
 RUN mkdir -p /work/firmwares
-COPY sasquatch /usr/local/bin/
-COPY cramfsck /usr/local/bin/
-COPY yaffshiv /usr/local/bin/
 COPY unstuff /usr/local/bin/
 
 ENV USER=root

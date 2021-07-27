@@ -26,15 +26,16 @@ curl -Ls https://api.github.com/repos/ReFirmLabs/binwalk/releases/latest | \
   grep -wo "\"https.*tarball.*\"" | sed 's/"//g' | wget -qi - -O binwalk.tar.gz && \
   tar -xf binwalk.tar.gz && \
   cd ReFirmLabs-binwalk-*/ && \
-  sudo python3 setup.py install
+  echo y | ./deps.sh | true
 sudo apt-get install -y mtd-utils gzip bzip2 tar arj lhasa p7zip p7zip-full cabextract fusecram cramfsswap squashfs-tools sleuthkit default-jdk cpio lzop lzma srecord zlib1g-dev liblzma-dev liblzo2-dev unzip
 
 git clone https://github.com/devttys0/sasquatch && (cd sasquatch && ./build.sh && cd -)
 git clone https://github.com/devttys0/yaffshiv && (cd yaffshiv && sudo python3 setup.py install)
 sudo cp core/unstuff /usr/local/bin/
 
-python3 -m pip install python-lzo cstruct git+https://github.com/sviehb/jefferson ubi_reader
+python3 -m pip install python-lzo cstruct ubi_reader
 sudo apt-get install -y python3-magic openjdk-8-jdk unrar
+python3 -m pip install git+https://github.com/ReFirmLabs/binwalk
 
 # for analyzer, initializer
 sudo apt-get install -y python3-bs4
