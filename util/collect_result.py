@@ -11,7 +11,7 @@ results = {}
 
 SCRATCH_DIR = ''
 
-for i in xrange(3):
+for i in range(3):
     if os.path.exists('../' * i + 'firmae.config'):
         SCRATCH_DIR = '../' * i + 'scratch'
 

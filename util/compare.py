@@ -30,7 +30,7 @@ def checkExist(brand, tarfile, imagefile):
  for dirname, dirnames, filenames in os.walk('./compare_work/tar/'):
   for filename in filenames:
     if filename.find('preinit') != -1:
-        print '[*] find init file : ' + os.path.join(dirname, filename)
+        print('[*] find init file : ' + os.path.join(dirname, filename))
         os.system('mkdir -p ' + resultDir)
         filepath = os.path.join(dirname, filename)
         dstfilepath = resultDir + filepath.replace('./compare_work/tar', '')
@@ -45,7 +45,7 @@ def compareconf(brand, tarfile, imagefile):
  for dirname, dirnames, filenames in os.walk(imagefile[:imagefile.rfind('/')]):
   for filename in filenames:
     if filename not in fileList:
-        print '[*] find config file : ' + os.path.join(dirname, filename)
+        print('[*] find config file : ' + os.path.join(dirname, filename))
         os.system('mkdir -p ' + resultDir)
         os.system('cp ' + os.path.join(dirname, filename) + ' ' + resultDir)
 
@@ -106,7 +106,7 @@ for dirname, dirnames, filenames in os.walk('./images'):
      idx = tarfile.find('/', 5) + 1
      idx2 = tarfile.find('/', idx)
      brand = tarfile[idx:idx2]
-     print '[*] compare now - ' + tarfile
-	 #checkExist(brand, tarfile, imagefile)
-	 compare(brand, tarfile, imagefile)
-	 compareconf(brand, tarfile, imagefile)
+     print('[*] compare now - ' + tarfile)
+     #checkExist(brand, tarfile, imagefile)
+     compare(brand, tarfile, imagefile)
+     compareconf(brand, tarfile, imagefile)
