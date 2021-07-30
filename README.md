@@ -1,9 +1,15 @@
 # FirmAE
 
-FirmAE is a fully-automated framework that performs emulation and vulnerability analysis. FirmAE significantly increases the emulation success rate (From [Firmadyne](https://github.com/firmadyne/firmadyne)'s 16.28% to 79.36%) with five arbitration techniques. We tested FirmAE on 1,124 wireless-router and IP-camera firmware images from top eight vendors.
+FirmAE is a fully-automated framework that performs emulation and vulnerability
+analysis. FirmAE significantly increases the emulation success rate (From
+[Firmadyne](https://github.com/firmadyne/firmadyne)'s 16.28% to 79.36%) with
+five arbitration techniques. We tested FirmAE on 1,124 wireless-router and
+IP-camera firmware images from top eight vendors.
 
-We also developed a dynamic analysis tool for 0-day discovery, which infers web service information based on the filesystem and kernel logs of target firmware.
-By running our tool on the succesfully emulation firmware images, we discovered 12 new 0-days which affect 23 devices.
+We also developed a dynamic analysis tool for 0-day discovery, which infers web
+service information based on the filesystem and kernel logs of target firmware.
+By running our tool on the succesfully emulation firmware images, we discovered
+12 new 0-days which affect 23 devices.
 
 # Installation
 
@@ -56,7 +62,8 @@ $ sudo ./run.sh -c <brand> <firmware>
 
 After `run.sh -c` finished.
 
-1. User-level basic debugging utility. (Useful when an emulated firmware is network reachable)
+1. User-level basic debugging utility. (Useful when an emulated firmware is
+   network reachable)
 
 ```console
 $ sudo ./run.sh -d <brand> <firmware>
@@ -94,7 +101,9 @@ $ sudo ./docker-init.sh
 
 ### Parallel mode
 
-Then, run one of the below commands. ```-ec``` checks only the emulation, and ```-ea``` checks the emulation and analyzes vulnerabilities.
+Then, run one of the below commands. ```-ec``` checks only the emulation, and
+```-ea``` checks the emulation and analyzes vulnerabilities.
+
 ```console
 $ sudo ./docker-helper.py -ec <brand> <firmware>
 $ sudo ./docker-helper.py -ea <brand> <firmware>
@@ -124,18 +133,25 @@ Google drive -
 
 # CVEs
 
-- ASUS: [CVE-2019-20082](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-20082)
-- Belkin: [Belkin01](https://github.com/pr0v3rbs/CVE/tree/master/Belkin01)
-- D-Link: [CVE-2018-20114](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-20114),
-          [CVE-2018-19986](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19986---hnap1setroutersettings),
-          [CVE-2018-19987](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19987---hnap1setaccesspointmode),
-          [CVE-2018-19988](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19988---hnap1setclientinfodemo),
-          [CVE-2018-19989](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19989---hnap1setqossettings),
-          [CVE-2018-19990](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19990---hnap1setwifiverifyalpha),
-          [CVE-2019-6258](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-6258),
-          [CVE-2019-20084](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-20084)
-- TRENDNet: [CVE-2019-11399](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-11399),
-            [CVE-2019-11400](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-11400)
+### ASUS
+- [CVE-2019-20082](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-20082)
+
+### Belkin
+- [Belkin01](https://github.com/pr0v3rbs/CVE/tree/master/Belkin01)
+
+### D-Link
+- [CVE-2018-20114](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-20114)
+- [CVE-2018-19986](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19986---hnap1setroutersettings)
+- [CVE-2018-19987](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19987---hnap1setaccesspointmode)
+- [CVE-2018-19988](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19988---hnap1setclientinfodemo)
+- [CVE-2018-19989](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19989---hnap1setqossettings)
+- [CVE-2018-19990](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19990---hnap1setwifiverifyalpha)
+- [CVE-2019-6258](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-6258)
+- [CVE-2019-20084](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-20084)
+
+### TRENDNet
+- [CVE-2019-11399](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-11399)
+- [CVE-2019-11400](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-11400)
 
 # Authors
 This research project has been conducted by [SysSec Lab](https://syssec.kr) at KAIST.
@@ -147,7 +163,9 @@ This research project has been conducted by [SysSec Lab](https://syssec.kr) at K
 * [Yongdae Kim](https://syssec.kaist.ac.kr/~yongdaek/)
 
 # Citation
-We would appreciate if you consider citing [our paper](https://syssec.kaist.ac.kr/pub/2020/kim_acsac2020.pdf) when using FirmAE.
+We would appreciate if you consider citing [our
+paper](https://syssec.kaist.ac.kr/pub/2020/kim_acsac2020.pdf) when using FirmAE.
+
 ```bibtex
 @inproceedings{kim:2020:firmae,
   author = {Mingeun Kim and Dongkwan Kim and Eunsoo Kim and Suryeon Kim and Yeongjin Jang and Yongdae Kim},
