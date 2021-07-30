@@ -100,6 +100,9 @@ $ sudo ./docker-helper.py -ec <brand> <firmware>
 $ sudo ./docker-helper.py -ea <brand> <firmware>
 ```
 
+Here, `<firmware>` can be a text file that lists the paths of firmware image.
+Check the sample file at [./examples/test.list](./examples/test.list).
+
 ### Debug mode
 
 After a firmware image successfully emulated.
