@@ -41,10 +41,9 @@ class docker_helper:
     def stop_core(self, container_name):
         return sp.check_output("docker stop {}".format(container_name), shell=True)
 
-    def run_core(self, idx, mode, brand, firmware_path):
+    def run_core(self, idx, mode, brand, firmware_path, docker_name):
         firmware_root = os.path.dirname(firmware_path)
         firmware = os.path.basename(firmware_path)
-        docker_name = 'docker{}_{}'.format(idx, firmware)
         cmd = """docker run -dit --rm \\
                 -v /dev:/dev \\
                 -v {0}:/work/FirmAE \\
@@ -85,7 +84,7 @@ class docker_helper:
                 f.readline()
                 last_line = f.readline()
                 if last_line.find("container failed") != -1:
-                    logging.error("[-] %s container failed to connect to the hosts' postgresql")
+                    logging.error("[-] %s container failed to connect to the hosts' postgresql", last_line)
                     return docker_name
 
         if not iid:
@@ -200,9 +199,15 @@ def print_usage(argv0):
     return
 
 def runner(args):
-    (idx, dh, mode, brand, firmware) = args
-    if os.path.isfile(firmware):
-        docker_name = dh.run_core(idx, mode, brand, firmware)
+    (idx, dh, mode, brand, firmware_path) = args
+    if os.path.isfile(firmware_path):
+        firmware = os.path.basename(firmware_path)
+        docker_name = 'docker{}_{}'.format(idx, firmware)
+        try:
+            dh.run_core(idx, mode, brand, firmware_path, docker_name)
+        except:
+            import traceback
+            traceback.print_exc()
         dh.stop_core(docker_name)
     else:
         logging.error("[-] Can't find firmware file")
