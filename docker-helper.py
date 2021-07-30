@@ -249,6 +249,7 @@ def main():
                 # this accepts firmware list file
                 with open(firmware_path, 'r') as f:
                     firmwares = f.read().splitlines()
+                firmwares = list(map(lambda x: x.split(','), firmwares))
 
             num_cores = mp.cpu_count()
             if len(firmwares) < num_cores:
@@ -259,6 +260,7 @@ def main():
 
             p = mp.Pool(num_cores)
             for idx, firmware in enumerate(firmwares):
+                brand, firmware = firmware
                 arg=(idx, dh, mode, brand, firmware)
                 p.apply_async(runner, args=(arg,))
                 time.sleep(1)
