@@ -5,3 +5,6 @@
 binaries/
 images/
 scratch/
+*.tar.gz
+*binwalk*
+result.txt
