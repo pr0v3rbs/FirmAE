@@ -213,7 +213,7 @@ def runner(args):
         logging.error("[-] Can't find firmware file")
 
 def main():
-    if len(sys.argv) < 2 or os.geteuid() != 0:
+    if len(sys.argv) < 2:# or os.geteuid() != 0:
         print_usage(sys.argv[0])
         exit(1)
 
