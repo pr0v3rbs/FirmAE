@@ -123,7 +123,7 @@ class docker_helper:
                     os.remove(image_name)
 
         if emulation_result:
-            logging.info("[+] %s emulation finished. (%0.4fs)", docker_name, time_elapsed)
+            logging.info("[+] %s (%d) emulation finished. (%0.4fs)", docker_name, iid, time_elapsed)
 
             # analyses
             if mode == "-a":
@@ -132,12 +132,12 @@ class docker_helper:
                 time_elapsed = time.time() - t1
 
                 if analyses_result:
-                    logging.info("[+] %s analysis finished. (%0.4fs)", docker_name, time_elapsed)
+                    logging.info("[+] %s (%d) analysis finished. (%0.4fs)", docker_name, iid, time_elapsed)
                 else:
-                    logging.error("[-] %s analysis failed. (%0.4fs)", docker_name, time_elapsed)
+                    logging.error("[-] %s (%d) analysis failed. (%0.4fs)", docker_name, iid, time_elapsed)
 
         else:
-            logging.error("[-] %s emulation failed. (%0.4fs)", docker_name, time_elapsed)
+            logging.error("[-] %s (%d) emulation failed. (%0.4fs)", docker_name, iid, time_elapsed)
 
         return docker_name
 
