@@ -166,7 +166,7 @@ class docker_helper:
             result_path = "{}/scratch/{}/result".format(self.firmae_root, iid)
             timeout = 2400
         else:
-            result_path = "{}/analyses/analyses_log/{}/{}/result".format(self.firmae_root, brand, iid)
+            result_path = "{}/scratch/{}/analysis_log/result".format(self.firmae_root, iid)
             timeout = 3600
 
         for i in range(timeout):
