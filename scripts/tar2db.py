@@ -7,7 +7,8 @@ import re
 import hashlib
 import psycopg2
 
-psql_ip = ''
+psql_ip = ""
+
 
 def getFileHashes(infile):
     t = tarfile.open(infile)
@@ -16,11 +17,19 @@ def getFileHashes(infile):
     for f in t.getmembers():
         if f.isfile():
             # we use f.name[1:] to get rid of the . at the beginning of the path
-            files.append((f.name[1:], hashlib.md5(t.extractfile(f).read()).hexdigest(),
-                          f.uid, f.gid, f.mode))
+            files.append(
+                (
+                    f.name[1:],
+                    hashlib.md5(t.extractfile(f).read()).hexdigest(),
+                    f.uid,
+                    f.gid,
+                    f.mode,
+                )
+            )
         elif f.issym():
             links.append((f.name[1:], f.linkpath))
     return (files, links)
+
 
 def getOids(objs, cur):
     # hashes ... all the hashes in the tar file
@@ -41,47 +50,72 @@ def getOids(objs, cur):
     result = dict([(y, x) for (x, y) in res])
     return result
 
+
 def createObjects(hashes, cur):
     query = """INSERT INTO object (hash) VALUES (%(hash)s) RETURNING id"""
     res = list()
     for h in set(hashes):
         try:
-            cur.execute(query, {'hash':h})
+            cur.execute(query, {"hash": h})
             oid = int(cur.fetchone()[0])
             res.append((oid, h))
         except:
             continue
     return res
 
+
 def insertObjectToImage(iid, files2oids, links, cur):
     query = """INSERT INTO object_to_image (iid, oid, filename, regular_file, uid, gid, permissions) VALUES (%(iid)s, %(oid)s, %(filename)s, %(regular_file)s, %(uid)s, %(gid)s, %(mode)s)"""
 
     try:
-        cur.executemany(query, [{'iid': iid, 'oid' : x[1], 'filename' : x[0][0],
-                             'regular_file' : True, 'uid' : x[0][1],
-                             'gid' : x[0][2], 'mode' : x[0][3]} \
-                            for x in files2oids])
-        cur.executemany(query, [{'iid': iid, 'oid' : 1, 'filename' : x[0],
-                             'regular_file' : False, 'uid' : None,
-                             'gid' : None, 'mode' : None} \
-                            for x in links])
+        cur.executemany(
+            query,
+            [
+                {
+                    "iid": iid,
+                    "oid": x[1],
+                    "filename": x[0][0],
+                    "regular_file": True,
+                    "uid": x[0][1],
+                    "gid": x[0][2],
+                    "mode": x[0][3],
+                }
+                for x in files2oids
+            ],
+        )
+        cur.executemany(
+            query,
+            [
+                {
+                    "iid": iid,
+                    "oid": 1,
+                    "filename": x[0],
+                    "regular_file": False,
+                    "uid": None,
+                    "gid": None,
+                    "mode": None,
+                }
+                for x in links
+            ],
+        )
     except:
         return
 
+
 def process(iid, infile):
     global psql_ip
-    dbh = psycopg2.connect(database="firmware",
-                           user="firmadyne",
-                           password="firmadyne",
-                           host=psql_ip)
+    dbh = psycopg2.connect(
+        database="firmware", user="firmadyne", password="firmadyne", host=psql_ip
+    )
     cur = dbh.cursor()
 
     (files, links) = getFileHashes(infile)
 
     oids = getOids(files, cur)
 
-    fdict = dict([(h, (filename, uid, gid, mode)) \
-            for (filename, h, uid, gid, mode) in files])
+    fdict = dict(
+        [(h, (filename, uid, gid, mode)) for (filename, h, uid, gid, mode) in files]
+    )
 
     file2oid = [(fdict[h], oid) for (h, oid) in oids.items()]
 
@@ -91,16 +125,17 @@ def process(iid, infile):
 
     dbh.close()
 
+
 def main():
     global psql_ip
     infile = iid = None
     opts, argv = getopt.getopt(sys.argv[1:], "f:i:h:")
     for k, v in opts:
-        if k == '-i':
+        if k == "-i":
             iid = int(v)
-        if k == '-f':
+        if k == "-f":
             infile = v
-        if k == '-h':
+        if k == "-h":
             psql_ip = v
 
     if infile and not iid:
@@ -109,6 +144,7 @@ def main():
             iid = int(m.groups(1))
 
     process(iid, infile)
+
 
 if __name__ == "__main__":
     main()

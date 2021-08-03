@@ -53,7 +53,9 @@ echo "----Creating Partition Table----"
 echo -e "o\nn\np\n1\n\n\nw" | /sbin/fdisk "${IMAGE}"
 
 echo "----Mounting QEMU Image----"
+echo "Image: ${IMAGE}"
 DEVICE=`add_partition ${IMAGE}`
+echo "Device: ${DEVICE:0:$((${#DEVICE}-2))}"
 
 echo "----Creating Filesystem----"
 sync

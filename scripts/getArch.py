@@ -5,9 +5,19 @@ import tarfile
 import subprocess
 import psycopg2
 
-archMap = {"MIPS64":"mips64", "MIPS":"mips", "ARM64":"arm64", "ARM":"arm", "Intel 80386":"intel", "x86-64":"intel64", "PowerPC":"ppc", "unknown":"unknown"}
+archMap = {
+    "MIPS64": "mips64",
+    "MIPS": "mips",
+    "ARM64": "arm64",
+    "ARM": "arm",
+    "Intel 80386": "intel",
+    "x86-64": "intel64",
+    "PowerPC": "ppc",
+    "unknown": "unknown",
+}
 
-endMap = {"LSB":"el", "MSB":"eb"}
+endMap = {"LSB": "el", "MSB": "eb"}
+
 
 def getArch(filetype):
     for arch in archMap:
@@ -15,23 +25,38 @@ def getArch(filetype):
             return archMap[arch]
     return None
 
+
 def getEndian(filetype):
     for endian in endMap:
         if filetype.find(endian) != -1:
             return endMap[endian]
     return None
 
+
 infile = sys.argv[1]
 psql_ip = sys.argv[2]
-base = infile[infile.rfind("/") + 1:]
-iid = base[:base.find(".")]
+base = infile[infile.rfind("/") + 1 :]
+iid = base[: base.find(".")]
 
-tar = tarfile.open(infile, 'r')
+tar = tarfile.open(infile, "r")
 
 infos = []
 fileList = []
 for info in tar.getmembers():
-    if any([info.name.find(binary) != -1 for binary in ["/busybox", "/alphapd", "/boa", "/http", "/hydra", "/helia", "/webs"]]):
+    if any(
+        [
+            info.name.find(binary) != -1
+            for binary in [
+                "/busybox",
+                "/alphapd",
+                "/boa",
+                "/http",
+                "/hydra",
+                "/helia",
+                "/webs",
+            ]
+        ]
+    ):
         infos.append(info)
     elif any([info.name.find(path) != -1 for path in ["/sbin/", "/bin/"]]):
         infos.append(info)
@@ -54,13 +79,12 @@ for info in infos:
     if arch and endian:
         print(arch + endian)
         subprocess.call(["rm", "-rf", "/tmp/" + iid])
-        dbh = psycopg2.connect(database="firmware",
-                               user="firmadyne",
-                               password="firmadyne",
-                               host=psql_ip)
+        dbh = psycopg2.connect(
+            database="firmware", user="firmadyne", password="firmadyne", host=psql_ip
+        )
         cur = dbh.cursor()
         query = """UPDATE image SET arch = '%s' WHERE id = %s;"""
-        cur.execute(query % (arch+endian, iid))
+        cur.execute(query % (arch + endian, iid))
         dbh.commit()
 
         with open("scratch/" + iid + "/fileType", "w") as f:
