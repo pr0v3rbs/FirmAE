@@ -8,3 +8,4 @@ scratch/
 *.tar.gz
 *binwalk*
 result.txt
+chromedriver
