@@ -48,7 +48,9 @@ for roots, dirs, files in os.walk(SCRATCH_DIR):
         )
     break
 
-titles = DELIMITER.join(["Number", "Brand", "Name", "Arch", "IP", "Ping", "Web", "RCE"])
+titles = DELIMITER.join(
+    ["Number", "Brand", "Name", "Arch", "IP", "Ping", "Web", "Vuln"]
+)
 
 outfile = open("result.txt", "w")
 outfile.write(titles + "\n")
