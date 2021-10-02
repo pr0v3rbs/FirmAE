@@ -35,7 +35,7 @@ sudo cp core/unstuff /usr/local/bin/
 
 python3 -m pip install python-lzo cstruct ubi_reader
 sudo apt-get install -y python3-magic openjdk-8-jdk unrar
-python3 -m pip install git+https://github.com/ReFirmLabs/binwalk
+python3 -m pip install git+https://github.com/ReFirmLabs/binwalk@772f271 # Release 2.3.1
 
 # for analyzer, initializer
 sudo apt-get install -y python3-bs4
