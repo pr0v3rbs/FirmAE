@@ -31,6 +31,7 @@ sudo apt-get install -y mtd-utils gzip bzip2 tar arj lhasa p7zip p7zip-full cabe
 
 git clone https://github.com/devttys0/sasquatch && (cd sasquatch && ./build.sh && cd -)
 git clone https://github.com/devttys0/yaffshiv && (cd yaffshiv && sudo python3 setup.py install && cd -)
+cd - # back to root of project
 sudo cp core/unstuff /usr/local/bin/
 
 python3 -m pip install python-lzo cstruct ubi_reader
