@@ -42,7 +42,7 @@ python3 -m pip install git+https://github.com/ReFirmLabs/binwalk@772f271 # Relea
 sudo apt-get install -y python3-bs4
 python3 -m pip install selenium
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-sudo dpkg -i google-chrome-stable_current_amd64.deb; apt-get -fy install
+sudo dpkg -i google-chrome-stable_current_amd64.deb; sudo apt-get -fy install
 rm google-chrome-stable_current_amd64.deb
 python3 -m pip install -r ./analyses/routersploit/requirements.txt
 cd ./analyses/routersploit && patch -p1 < ../routersploit_patch && cd -
