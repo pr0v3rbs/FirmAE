@@ -27,7 +27,7 @@ RUN python3 -m pip install python-lzo cstruct ubi_reader
 RUN apt-get install -y python3-magic unrar
 
 RUN apt-get install -y openjdk-8-jdk
-RUN python3 -m pip install git+https://github.com/ReFirmLabs/binwalk
+RUN python3 -m pip install git+https://github.com/ReFirmLabs/binwalk@772f271 # Release 2.3.1
 RUN git clone https://github.com/devttys0/sasquatch && (cd sasquatch && ./build.sh && cd -)
 
 # for qemu
