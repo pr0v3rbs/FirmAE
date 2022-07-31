@@ -1,8 +1,9 @@
 #!/bin/bash
 
 sudo apt-get update
-sudo apt-get install -y curl wget git ruby python3 python3-pip bc
-python3 -m pip install coloredlogs
+sudo apt-get install -y curl wget tar git ruby python python3 python3-pip bc
+sudo python3 -m pip install --upgrade pip
+sudo python3 -m pip install coloredlogs
 
 # for docker
 sudo apt-get install -y docker.io
@@ -16,27 +17,23 @@ sudo -u postgres psql -d firmware < ./database/schema
 echo "listen_addresses = '172.17.0.1,127.0.0.1,localhost'" | sudo -u postgres tee --append /etc/postgresql/*/main/postgresql.conf
 echo "host all all 172.17.0.1/24 trust" | sudo -u postgres tee --append /etc/postgresql/*/main/pg_hba.conf
 
-sudo apt install libpq-dev
+sudo apt install -y libpq-dev
 python3 -m pip install psycopg2 psycopg2-binary
 
 sudo apt-get install -y busybox-static bash-static fakeroot dmsetup kpartx netcat-openbsd nmap python3-psycopg2 snmp uml-utilities util-linux vlan
 
 # for binwalk
-curl -Ls https://api.github.com/repos/ReFirmLabs/binwalk/releases/latest | \
-  grep -wo "\"https.*tarball.*\"" | sed 's/"//g' | wget -qi - -O binwalk.tar.gz && \
-  tar -xf binwalk.tar.gz && \
-  cd ReFirmLabs-binwalk-*/ && \
-  echo y | ./deps.sh | true
+wget https://github.com/ReFirmLabs/binwalk/archive/refs/tags/v2.3.3.tar.gz && \
+  tar -xf v2.3.3.tar.gz && \
+  cd binwalk-2.3.3 && \
+  echo y | ./deps.sh && \
+  sudo python3 setup.py install
 sudo apt-get install -y mtd-utils gzip bzip2 tar arj lhasa p7zip p7zip-full cabextract fusecram cramfsswap squashfs-tools sleuthkit default-jdk cpio lzop lzma srecord zlib1g-dev liblzma-dev liblzo2-dev unzip
 
-git clone https://github.com/devttys0/sasquatch && (cd sasquatch && ./build.sh && cd -)
-git clone https://github.com/devttys0/yaffshiv && (cd yaffshiv && sudo python3 setup.py install && cd -)
 cd - # back to root of project
-sudo cp core/unstuff /usr/local/bin/
 
 python3 -m pip install python-lzo cstruct ubi_reader
 sudo apt-get install -y python3-magic openjdk-8-jdk unrar
-python3 -m pip install git+https://github.com/ReFirmLabs/binwalk@772f271 # Release 2.3.1
 
 # for analyzer, initializer
 sudo apt-get install -y python3-bs4

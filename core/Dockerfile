@@ -1,11 +1,11 @@
 FROM ubuntu:18.04
 MAINTAINER Mingeun Kim <pr0v3rbs@kaist.ac.kr>, Minkyo Seo <0xsaika@gmail.com>
 
-RUN apt-get update && apt-get -y dist-upgrade
+RUN apt-get update
 RUN apt-get install -y apt-utils
-RUN apt-get install -y wget bc psmisc ruby telnet
+RUN apt-get install -y wget tar bc psmisc ruby telnet
 RUN apt-get install -y net-tools iputils-ping iptables iproute2 curl
-RUN apt-get install -yy python3 python3-pip
+RUN apt-get install -yy python python3 python3-pip
 RUN python3 -m pip install --upgrade pip
 
 RUN apt-get install -y libpq-dev
@@ -16,19 +16,17 @@ RUN apt-get install -y busybox-static bash-static fakeroot git kpartx netcat-ope
 # for binwalk
 # bypass tzdata interaction
 ENV DEBIAN_FRONTEND=noninteractive
-RUN curl -Ls https://api.github.com/repos/ReFirmLabs/binwalk/releases/latest | \
-    grep -wo "\"https.*tarball.*\"" | sed 's/"//g' | wget -qi - -O binwalk.tar.gz && \
-    tar -xf binwalk.tar.gz && \
-    cd ReFirmLabs-binwalk-*/ && \
-    echo y | ./deps.sh | true
+RUN wget https://github.com/ReFirmLabs/binwalk/archive/refs/tags/v2.3.3.tar.gz && \
+    tar -xf v2.3.3.tar.gz && \
+    cd binwalk-2.3.3 && \
+    echo y | ./deps.sh && \
+    python3 setup.py install
 RUN apt-get install -y mtd-utils gzip bzip2 tar arj lhasa p7zip p7zip-full cabextract fusecram cramfsswap squashfs-tools sleuthkit default-jdk cpio lzop lzma srecord zlib1g-dev liblzma-dev liblzo2-dev
 
 RUN python3 -m pip install python-lzo cstruct ubi_reader
 RUN apt-get install -y python3-magic unrar
 
 RUN apt-get install -y openjdk-8-jdk
-RUN python3 -m pip install git+https://github.com/ReFirmLabs/binwalk@772f271 # Release 2.3.1
-RUN git clone https://github.com/devttys0/sasquatch && (cd sasquatch && ./build.sh && cd -)
 
 # for qemu
 RUN apt-get install -y qemu-system-arm qemu-system-mips qemu-system-x86 qemu-utils
@@ -48,7 +46,6 @@ RUN chmod 777 /usr/bin/sudo
 
 RUN mkdir -p /work/FirmAE
 RUN mkdir -p /work/firmwares
-COPY unstuff /usr/local/bin/
 
 ENV USER=root
 ENV FIRMAE_DOCKER=true
