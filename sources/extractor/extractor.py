@@ -442,8 +442,8 @@ class ExtractionItem(object):
                                   self.extractor.do_kernel,
                                   self.extractor.do_rootfs))
 
-            for module in binwalk.scan(self.item, "--run-as=root", "-e", "-r", "-C", self.temp,
-                                       signature=True, quiet=True):
+            for module in binwalk.scan(self.item, "--run-as=root", "--preserve-symlinks",
+                    "-e", "-r", "-C", self.temp, signature=True, quiet=True):
                 prev_entry = None
                 for entry in module.results:
                     desc = entry.description
