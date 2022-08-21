@@ -59,22 +59,30 @@ class docker_helper:
         logging.info("[*] {} emulation start!".format(docker_name))
         time.sleep(5)
 
-        cmd = "docker exec -id \"{0}\" ".format(docker_name)
+        docker_mode = "-it" if mode == "-d" else "-id"
+        cmd = "docker exec {0} \"{1}\" ".format(docker_mode, docker_name)
         cmd += "bash -c \"cd /work/FirmAE && "
         cmd += "./run.sh {0} {1} /work/firmwares/{2} ".format(mode,
                                                               brand,
                                                               firmware)
-        cmd += "2>&1 > /work/FirmAE/scratch/{0}.log".format(firmware)
-        cmd += "\" &"
+        if mode == "-d":
+            cmd += "\""
+        else:
+            cmd += "2>&1 > /work/FirmAE/scratch/{0}.log\" &".format(firmware)
 
         t0 = time.time()
         iid = -1
-        sp.check_output(cmd, shell=True)
+        if mode == "-d":
+            os.system(cmd)
+        else:
+            sp.check_output(cmd, shell=True)
         firmware_log = os.path.join(self.firmae_root, "scratch", firmware + ".log")
 
-        if mode in ["-r", "-d"]:
+        if mode == "-r":
             cmd = "docker exec -it \"{0}\" bash".format(docker_name)
             os.system(cmd)
+
+        if mode in ["-r", "-d"]:
             return docker_name
 
         time.sleep(10)
@@ -245,7 +253,8 @@ def main():
                 with open(firmware_path, 'r') as f:
                     firmwares = f.read().splitlines()
 
-            num_cores = mp.cpu_count()
+            #num_cores = mp.cpu_count()
+            num_cores = 8
             if len(firmwares) < num_cores:
                 num_cores = len(firmwares)
 

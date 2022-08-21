@@ -59,7 +59,10 @@ class firmae_helper():
         self.telnetInit = True
 
     def connect_socat(self):
-        subprocess.call(['sudo', 'socat', '-', 'UNIX-CONNECT:/tmp/qemu.' + str(self.iid) + '.S1'])
+        argv = ['socat', '-', 'UNIX-CONNECT:/tmp/qemu.' + str(self.iid) + '.S1']
+        if os.getuid() != 0:
+            argv.insert(0, 'sudo')
+        subprocess.call(argv)
 
     def connect_shell(self):
         self.connect()
@@ -138,8 +141,8 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             break
         except:
-            select = ''
-            pass
+            print("incorrect selection")
+            break
 
         if select == 1:
             fh.connect_socat()

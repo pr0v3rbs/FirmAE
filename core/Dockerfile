@@ -4,7 +4,7 @@ MAINTAINER Mingeun Kim <pr0v3rbs@kaist.ac.kr>, Minkyo Seo <0xsaika@gmail.com>
 RUN apt-get update
 RUN apt-get install -y apt-utils
 RUN apt-get install -y wget tar bc psmisc ruby telnet
-RUN apt-get install -y net-tools iputils-ping iptables iproute2 curl
+RUN apt-get install -y socat net-tools iputils-ping iptables iproute2 curl
 RUN apt-get install -yy python python3 python3-pip
 RUN python3 -m pip install --upgrade pip
 
