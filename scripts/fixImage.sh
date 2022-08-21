@@ -37,6 +37,8 @@ if (${FIRMAE_BOOT}); then
   mkdir -p "$(resolve_link /usr/bin)"
   mkdir -p "$(resolve_link /usr/sbin)"
 
+  ${BUSYBOX} chmod a+x -R `${BUSYBOX} find / -type d \( -name bin -o -name sbin \)`
+
   for FILE in `${BUSYBOX} find /bin /sbin /usr/bin /usr/sbin -type f -perm -u+x -exec ${BUSYBOX} strings {} \; | ${BUSYBOX} egrep "^(/var|/etc|/tmp)(.+)\/([^\/]+)$"`
   do
     DIR=`${BUSYBOX} dirname "${FILE}"`
