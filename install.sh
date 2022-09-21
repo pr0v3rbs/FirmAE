@@ -1,5 +1,19 @@
 #!/bin/bash
 
+abort()
+{
+    echo >&2 '
+***************
+*** ABORTED ***
+***************
+'
+    echo "An error occurred. Exiting..." >&2
+    exit 1
+}
+
+trap 'abort' 0
+
+set -e
 # exit when any command fails
 set -e
 set -o pipefail
@@ -62,3 +76,13 @@ if ! test -e "./analyses/chromedriver"; then
     unzip chromedriver_linux64.zip -d ./analyses/
     rm -rf chromedriver_linux64.zip
 fi
+# If an error occurs, the abort() function will be called.
+#----------------------------------------------------------
+# Done!
+trap : 0
+
+echo >&2 '
+************
+*** DONE *** 
+************
+'
