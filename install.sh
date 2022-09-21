@@ -83,6 +83,6 @@ trap : 0
 
 echo >&2 '
 ************
-*** DONE *** 
+*** DONE, FirmAE installed without error codes to be worried about.  *** 
 ************
 '
