@@ -1,12 +1,21 @@
 #!/bin/bash
 
-sudo apt-get update
-sudo apt-get install -y curl wget tar git ruby python python3 python3-pip bc
+# exit when any command fails
+set -e
+# see https://intoli.com/blog/exit-on-errors-in-bash-scripts/ for usage
+# keep track of the last executed command
+trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
+# echo an error message before exiting
+trap 'echo "\"${last_command}\" command filed with exit code $?."' EXIT
+
+sudo apt-get update || exit
+sudo apt-get install -y curl wget tar git ruby python python3 python3-pip bc || exit 
 sudo python3 -m pip install --upgrade pip
 sudo python3 -m pip install coloredlogs
 
+
 # for docker
-sudo apt-get install -y docker.io
+sudo apt-get install -y docker.io 
 
 # postgresql
 sudo apt-get install -y postgresql
