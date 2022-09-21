@@ -7,28 +7,28 @@ By running our tool on the succesfully emulation firmware images, we discovered 
 
 # Installation
 
-Note that we tested FirmAE on Ubuntu 18.04.
+Note that we tested FirmAE on Kali 2022.03 at 9/21/2022.
 
 1. Clone `FirmAE`
 ```console
-$ git clone --recursive https://github.com/pr0v3rbs/FirmAE
+git clone --recursive https://github.com/pr0v3rbs/FirmAE
 ```
 
 2. Run `download.sh` script.
 ```console
-$ ./download.sh
+./download.sh
 ```
 
 3. Run `install.sh` script.
 ```console
-$ ./install.sh
+./install.sh
 ```
 
 # Usage
 
 1. Execute `init.sh` script.
 ```console
-$ ./init.sh
+./init.sh
 ```
 
 2. Prepare a firmware.
@@ -41,25 +41,12 @@ $ wget ftp://ftp.dlink.eu/Products/dir/dir-868l/driver_software/DIR-868L_fw_revB
 $ sudo ./run.sh -c <brand> <firmware>
 ```
 
-4. Analyze the target firmware
-    * Analysis mode uses the FirmAE analyzer
-    ```console
-    $ sudo ./run.sh -a <brand> <firmware>
-    ```
-
-    * Run mode helps to test web service or execute custom analyzer
-    ```console
-    $ sudo ./run.sh -r <brand> <firmware>
-    ```
-
-## Debug
-
 After `run.sh -c` finished.
 
-1. User-level basic debugging utility. (Useful when an emulated firmware is network reachable)
+4. User-level basic debugging utility. (Useful when an emulated firmware is network reachable)
 
 ```console
-$ sudo ./run.sh -d <brand> <firmware>
+sudo ./run.sh -d <brand> <firmware>
 ```
 
 2. Kernel-level boot debugging.
@@ -119,39 +106,4 @@ Google spreadsheet -
 Google drive -
 [download](https://drive.google.com/file/d/1hdm75NVKBvs-eVH9rKb5xfgryNSnsg_8/view?usp=sharing)
 
-# CVEs
-
-- ASUS: [CVE-2019-20082](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-20082)
-- Belkin: [Belkin01](https://github.com/pr0v3rbs/CVE/tree/master/Belkin01)
-- D-Link: [CVE-2018-20114](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-20114),
-          [CVE-2018-19986](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19986---hnap1setroutersettings),
-          [CVE-2018-19987](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19987---hnap1setaccesspointmode),
-          [CVE-2018-19988](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19988---hnap1setclientinfodemo),
-          [CVE-2018-19989](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19989---hnap1setqossettings),
-          [CVE-2018-19990](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2018-19986%20-%2019990#cve-2018-19990---hnap1setwifiverifyalpha),
-          [CVE-2019-6258](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-6258),
-          [CVE-2019-20084](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-20084)
-- TRENDNet: [CVE-2019-11399](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-11399),
-            [CVE-2019-11400](https://github.com/pr0v3rbs/CVE/tree/master/CVE-2019-11400)
-
-# Authors
-This research project has been conducted by [SysSec Lab](https://syssec.kr) at KAIST.
-* [Mingeun Kim](https://pr0v3rbs.blogspot.kr/)
-* [Dongkwan Kim](https://0xdkay.me/)
-* [Eunsoo Kim](https://hahah.kim)
-* [Suryeon Kim](#)
-* [Yeongjin Jang](https://www.unexploitable.systems/)
-* [Yongdae Kim](https://syssec.kaist.ac.kr/~yongdaek/)
-
-# Citation
-We would appreciate if you consider citing [our paper](https://syssec.kaist.ac.kr/pub/2020/kim_acsac2020.pdf) when using FirmAE.
-```bibtex
-@inproceedings{kim:2020:firmae,
-  author = {Mingeun Kim and Dongkwan Kim and Eunsoo Kim and Suryeon Kim and Yeongjin Jang and Yongdae Kim},
-  title = {{FirmAE}: Towards Large-Scale Emulation of IoT Firmware for Dynamic Analysis},
-  booktitle = {Annual Computer Security Applications Conference (ACSAC)},
-  year = 2020,
-  month = dec,
-  address = {Online}
-}
 ```
