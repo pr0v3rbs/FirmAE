@@ -1,19 +1,4 @@
 #!/bin/bash
-
-abort()
-{
-    echo >&2 '
-***************
-*** ABORTED ***
-***************
-'
-    echo "An error occurred. Exiting..." >&2
-    exit 1
-}
-
-trap 'abort' 0
-
-set -e
 # exit when any command fails
 set -e
 set -o pipefail
@@ -23,8 +8,23 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
 trap 'echo "\"${last_command}\" command filed with exit code $?."' EXIT
 
+abort()
+{
+    echo >&2 '
+***************
+*** ABORTED ***
+***************
+'
+    echo "An error occurred. Please report to creator n0s3y. Exiting..." >&2
+    exit 1
+}
+
+trap 'abort' 0
+
+
+
 sudo apt-get update || exit
-sudo apt-get install -y curl wget tar git ruby python python3 python3-pip bc || exit 
+sudo apt-get install -y curl wget tar git ruby python3 python3-pip bc || exit 
 sudo python3 -m pip install --upgrade pip
 sudo python3 -m pip install coloredlogs
 
