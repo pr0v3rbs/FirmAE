@@ -65,8 +65,8 @@ python3 -m pip install selenium
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 sudo dpkg -i google-chrome-stable_current_amd64.deb; sudo apt-get -fy install
 rm google-chrome-stable_current_amd64.deb
-python3 -m pip install -r ./analyses/routersploit/requirements.txt
-cd ./analyses/routersploit && patch -p1 < ../routersploit_patch && cd -
+python3 -m pip install -r ./analyses/routersploit/requirements.txt || true
+cd ./analyses/routersploit && patch -p1 < ../routersploit_patch && cd - || true
 
 # for qemu
 sudo apt-get install -y qemu-system-arm qemu-system-mips qemu-system-x86 qemu-utils
