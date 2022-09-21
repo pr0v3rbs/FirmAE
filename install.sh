@@ -57,7 +57,7 @@ sudo apt-get install -y mtd-utils gzip bzip2 tar arj lhasa p7zip p7zip-full cabe
 cd - # back to root of project
 
 python3 -m pip install python-lzo cstruct ubi_reader
-sudo apt-get install -y python3-magic openjdk-8-jdk unrar
+sudo apt-get install -y python3-magic  openjdk-11-jdk unrar
 
 # for analyzer, initializer
 sudo apt-get install -y python3-bs4
