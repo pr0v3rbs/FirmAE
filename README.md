@@ -1,9 +1,7 @@
 # FirmAE
 
-FirmAE is a fully-automated framework that performs emulation and vulnerability analysis. FirmAE significantly increases the emulation success rate (From [Firmadyne](https://github.com/firmadyne/firmadyne)'s 16.28% to 79.36%) with five arbitration techniques. We tested FirmAE on 1,124 wireless-router and IP-camera firmware images from top eight vendors.
+Stable release hosted by Mick Beer, aka n0s3y, to provide a release that is up to date with the current KALI release BUT with maintained code to make sure you can emulate the firmware you want to. -- Mick
 
-We also developed a dynamic analysis tool for 0-day discovery, which infers web service information based on the filesystem and kernel logs of target firmware.
-By running our tool on the succesfully emulation firmware images, we discovered 12 new 0-days which affect 23 devices.
 
 # Installation
 
@@ -30,36 +28,30 @@ git clone --recursive https://github.com/pr0v3rbs/FirmAE
 ```console
 ./init.sh
 ```
-
-2. Prepare a firmware.
-```console
-$ wget ftp://ftp.dlink.eu/Products/dir/dir-868l/driver_software/DIR-868L_fw_revB_2-05b02_eu_multi_20161117.zip
-```
-
-3. Check emulation
+2. Check emulation
 ```console
 $ sudo ./run.sh -c <brand> <firmware>
 ```
 
 After `run.sh -c` finished.
 
-4. User-level basic debugging utility. (Useful when an emulated firmware is network reachable)
+3. User-level basic debugging utility. (Useful when an emulated firmware is network reachable)
 
 ```console
 sudo ./run.sh -d <brand> <firmware>
 ```
 
-2. Kernel-level boot debugging.
+## OPTIONAL: Kernel-level boot debugging.
 
 ```console
-$ sudo ./run.sh -b <brand> <firmware>
+sudo ./run.sh -b <brand> <firmware>
 ```
 
-## Turn on/off arbitration
+### Turn on/off arbitration
 
 Check the five arbitrations environment variable in the `firmae.config`
 ```sh
-$ head firmae.config
+head firmae.config
 #!/bin/sh
 
 FIRMAE_BOOT=true
@@ -76,22 +68,22 @@ if (${FIRMAE_ETC}); then
 
 First, prepare a docker image.
 ```console
-$ sudo ./docker-init.sh
+sudo ./docker-init.sh
 ```
 
 ### Parallel mode
 
 Then, run one of the below commands. ```-ec``` checks only the emulation, and ```-ea``` checks the emulation and analyzes vulnerabilities.
 ```console
-$ sudo ./docker-helper.py -ec <brand> <firmware>
-$ sudo ./docker-helper.py -ea <brand> <firmware>
+sudo ./docker-helper.py -ec <brand> <firmware>
+sudo ./docker-helper.py -ea <brand> <firmware>
 ```
 
 ### Debug mode
 
 After a firmware image successfully emulated.
 ```console
-$ sudo ./docker-helper.py -ed <firmware>
+sudo ./docker-helper.py -ed <firmware>
 ```
 
 # Evaluation
