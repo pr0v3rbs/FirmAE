@@ -2,6 +2,7 @@
 
 # exit when any command fails
 set -e
+set -o pipefail
 # see https://intoli.com/blog/exit-on-errors-in-bash-scripts/ for usage
 # keep track of the last executed command
 trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
