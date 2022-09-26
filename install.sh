@@ -15,7 +15,7 @@ abort()
 *** ABORTED ***
 ***************
 '
-    echo "An error occurred. Please report to creator n0s3y. Exiting..." >&2
+    echo "An error occurred. Exiting..." >&2
     exit 1
 }
 
