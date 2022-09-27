@@ -76,7 +76,7 @@ if ! test -e "./analyses/chromedriver"; then
     unzip chromedriver_linux64.zip -d ./analyses/
     rm -rf chromedriver_linux64.zip
 fi
-sudo chmod +x getfirmware.sh
+
 # If an error occurs, the abort() function will be called.
 #----------------------------------------------------------
 # Done!
