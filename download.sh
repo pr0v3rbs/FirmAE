@@ -1,13 +1,6 @@
 #!/bin/sh
-set -e
 
-firmware(){
- wget -N --continue -P./firmware/ $*
-}
-echo "Downloading firmware..."
-wget http://files.dlink.com.au/products/DIR-895L/REV_A/Firmware/Firmware_v1.13b03/DIR895LA1_FW113b03.bin
-echo  "De testfirmware genaamd 'DIR-8905L' zou nu in jouw wd moeten staan.
-echo "Done!"
+set -e
 
 download(){
  wget -N --continue -P./binaries/ $*
