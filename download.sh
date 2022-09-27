@@ -1,6 +1,8 @@
 #!/bin/sh
-
 set -e
+
+echo "Downloading 895L Dlink firmware binary..."
+cd ~/FirmAE && sudo chmod +x getfirmware.sh && ./getfirmware.sh
 
 download(){
  wget -N --continue -P./binaries/ $*
