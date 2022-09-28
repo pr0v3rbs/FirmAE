@@ -31,7 +31,9 @@ RUN python3 -m pip install git+https://github.com/ReFirmLabs/binwalk
 
 # for qemu
 RUN apt-get install -y qemu-system-arm qemu-system-mips qemu-system-x86 qemu-utils
-
+# for rust dependency
+RUN apt-get install rustc cargo -y
+RUN python3 -m pip install setuptools_rust
 # for analyzer
 RUN python3 -m pip install selenium bs4 requests future paramiko pysnmp==4.4.6 pycryptodome
 # google chrome
