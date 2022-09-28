@@ -7,7 +7,9 @@ import time
 import telnetlib
 import pdb
 from socket import *
+from rich import print, pretty
 
+pretty.install()
 
 class firmae_helper():
     def __init__(self, iid):
