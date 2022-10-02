@@ -32,7 +32,7 @@ git clone --recursive https://github.com/n0s3y/FirmAE.git
 ```
 2. Check emulation
 ```console
-$ sudo ./run.sh -c <brand> <firmware>
+sudo ./run.sh -c <brand> <firmware>
 ```
 
 After `run.sh -c` finished.
