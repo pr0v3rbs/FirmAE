@@ -11,45 +11,45 @@ Note that we tested FirmAE on Ubuntu 18.04.
 
 1. Clone `FirmAE`
 ```console
-$ git clone --recursive https://github.com/pr0v3rbs/FirmAE
+git clone --recursive https://github.com/pr0v3rbs/FirmAE
 ```
 
 2. Run `download.sh` script.
 ```console
-$ ./download.sh
+./download.sh
 ```
 
 3. Run `install.sh` script.
 ```console
-$ ./install.sh
+./install.sh
 ```
 
 # Usage
 
 1. Execute `init.sh` script.
 ```console
-$ ./init.sh
+./init.sh
 ```
 
 2. Prepare a firmware.
 ```console
-$ wget ftp://ftp.dlink.eu/Products/dir/dir-868l/driver_software/DIR-868L_fw_revB_2-05b02_eu_multi_20161117.zip
+wget ftp://ftp.dlink.eu/Products/dir/dir-868l/driver_software/DIR-868L_fw_revB_2-05b02_eu_multi_20161117.zip
 ```
 
 3. Check emulation
 ```console
-$ sudo ./run.sh -c <brand> <firmware>
+sudo ./run.sh -c <brand> <firmware>
 ```
 
 4. Analyze the target firmware
     * Analysis mode uses the FirmAE analyzer
     ```console
-    $ sudo ./run.sh -a <brand> <firmware>
+    sudo ./run.sh -a <brand> <firmware>
     ```
 
     * Run mode helps to test web service or execute custom analyzer
     ```console
-    $ sudo ./run.sh -r <brand> <firmware>
+    sudo ./run.sh -r <brand> <firmware>
     ```
 
 ## Debug
@@ -59,13 +59,13 @@ After `run.sh -c` finished.
 1. User-level basic debugging utility. (Useful when an emulated firmware is network reachable)
 
 ```console
-$ sudo ./run.sh -d <brand> <firmware>
+sudo ./run.sh -d <brand> <firmware>
 ```
 
 2. Kernel-level boot debugging.
 
 ```console
-$ sudo ./run.sh -b <brand> <firmware>
+sudo ./run.sh -b <brand> <firmware>
 ```
 
 ## Turn on/off arbitration
@@ -89,22 +89,22 @@ if (${FIRMAE_ETC}); then
 
 First, prepare a docker image.
 ```console
-$ sudo ./docker-init.sh
+sudo ./docker-init.sh
 ```
 
 ### Parallel mode
 
 Then, run one of the below commands. ```-ec``` checks only the emulation, and ```-ea``` checks the emulation and analyzes vulnerabilities.
 ```console
-$ sudo ./docker-helper.py -ec <brand> <firmware>
-$ sudo ./docker-helper.py -ea <brand> <firmware>
+sudo ./docker-helper.py -ec <brand> <firmware>
+sudo ./docker-helper.py -ea <brand> <firmware>
 ```
 
 ### Debug mode
 
 After a firmware image successfully emulated.
 ```console
-$ sudo ./docker-helper.py -ed <firmware>
+sudo ./docker-helper.py -ed <firmware>
 ```
 
 # Evaluation
