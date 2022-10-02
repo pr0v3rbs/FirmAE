@@ -19,6 +19,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN wget https://github.com/ReFirmLabs/binwalk/archive/refs/tags/v2.3.3.tar.gz && \
     tar -xf v2.3.3.tar.gz && \
     cd binwalk-2.3.3 && \
+    sed -i 's/^install_unstuff//g' deps.sh && \
     echo y | ./deps.sh && \
     python3 setup.py install
 RUN apt-get install -y mtd-utils gzip bzip2 tar arj lhasa p7zip p7zip-full cabextract fusecram cramfsswap squashfs-tools sleuthkit default-jdk cpio lzop lzma srecord zlib1g-dev liblzma-dev liblzo2-dev
@@ -46,6 +47,7 @@ RUN chmod 777 /usr/bin/sudo
 
 RUN mkdir -p /work/FirmAE
 RUN mkdir -p /work/firmwares
+COPY unstuff /usr/local/bin/
 
 ENV USER=root
 ENV FIRMAE_DOCKER=true
