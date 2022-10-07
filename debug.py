@@ -8,6 +8,7 @@ import telnetlib
 import pdb
 from socket import *
 
+
 class firmae_helper():
     def __init__(self, iid):
         self.iid = int(iid)
@@ -126,12 +127,12 @@ if __name__ == '__main__':
         print('------------------------------')
         print('|       FirmAE Debugger      |')
         print('------------------------------')
-        print('1. Connect to socat')
-        print('2. Shell')
-        print('3. TCPdump')
-        print('4. GDB-server')
-        print('5. File Transfer')
-        print('6. EXIT')
+        print('1. connect to socat')
+        print('2. connect to shell')
+        print('3. tcpdump')
+        print('4. run gdbserver')
+        print('5. file transfer')
+        print('6. exit')
 
     while 1:
         menu()
