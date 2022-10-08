@@ -81,3 +81,11 @@ echo >&2 '
 '
 
 $ zenity --info --title="Installation complete" --text="Please first execute './init.sh'" --no-wrap
+
+if zenity --question --title="Start emulation" --text="Do you want to start the emulation?" --no-wrap 
+    then
+        zenity --info --title="yes" --text="Starting emulation..." --no-wrap
+        ./runner.sh
+    else 
+        exit
+fi
