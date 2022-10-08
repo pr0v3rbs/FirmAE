@@ -47,26 +47,10 @@ zenity --warning --title="Installing FirmAE" --text="Please do not close this te
 ./download.sh
 ./install.sh 
 notify-send "File Downloader" "Download complete: FirmAE"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#
+#
+#
+# End of CODE
 
 
 # If an error occurs, the abort() function will be called.
@@ -80,6 +64,7 @@ echo >&2 '
 ************
 '
 
+#c ontinuity by starting the emulation script
 $ zenity --info --title="Installation complete" --text="Please first execute './init.sh'" --no-wrap
 
 if zenity --question --title="Start emulation" --text="Do you want to start the emulation?" --no-wrap 
