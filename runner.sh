@@ -10,6 +10,7 @@ BRAND=$(zenity --entry --entry-text="Type the brand of the firmware" --text="Tel
 
 if zenity --question --title="FirmAE firmware runner" --text="Would you like to open this file with the FirmAE Debugger?"
 then
+    ./init.sh
     sudo ./run.sh -d $ "file://${FILE}"
 else
     zenity --text-info --filename="$FILE" --title="Firmware runner"
