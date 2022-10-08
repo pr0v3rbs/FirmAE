@@ -9,18 +9,20 @@ By running our tool on the succesfully emulation firmware images, we discovered 
 
 Note that we tested FirmAE on Ubuntu 18.04.
 
-1. Clone `FirmAE`
+1. Clone `FirmAE`.
 ```console
 git clone --recursive https://github.com/pr0v3rbs/FirmAE
 ```
 
 2. Run `firm.sh` script to install FirmAE after cloning.
 ```console
-./firm.sh```
+./firm.sh
+```
 
 3. Run `runner.sh` script to start debugging.
 ```console
-./runner.sh```
+./runner.sh
+```
 
 # Usage
 
