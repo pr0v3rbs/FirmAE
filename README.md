@@ -14,15 +14,13 @@ Note that we tested FirmAE on Ubuntu 18.04.
 git clone --recursive https://github.com/pr0v3rbs/FirmAE
 ```
 
-2. Run `download.sh` script.
+2. Run `firm.sh` script to install FirmAE after cloning.
 ```console
-./download.sh
-```
+./firm.sh```
 
-3. Run `install.sh` script.
+3. Run `runner.sh` script to start debugging.
 ```console
-./install.sh
-```
+./runner.sh```
 
 # Usage
 
