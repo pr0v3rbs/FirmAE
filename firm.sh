@@ -65,7 +65,7 @@ echo >&2 '
 '
 
 #c ontinuity by starting the emulation script
-$ zenity --info --title="Installation complete" --text="Please first execute './init.sh'" --no-wrap
+zenity --info --title="Installation complete" --text="Please first execute './init.sh'" --no-wrap
 
 if zenity --question --title="Start emulation" --text="Do you want to start the emulation?" --no-wrap 
     then
