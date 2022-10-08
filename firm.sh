@@ -44,8 +44,6 @@ sudo apt install git
 
 zenity --warning --title="Installing FirmAE" --text="Please do not close this terminal window." --no-wrap
 # Clone FirmAE & install it
-git clone https://github.com/n0s3y/FirmAE
-cd FirmAE
 ./download.sh
 ./install.sh 
 notify-send "File Downloader" "Download complete: FirmAE"
