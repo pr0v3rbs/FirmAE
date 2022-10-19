@@ -13,7 +13,7 @@ Note that we tested FirmAE on Kali 2022.3.
 
 1. Clone `FirmAE`.
 ```console
-git clone --recursive https://github.com/pr0v3rbs/FirmAE
+git clone --recursive https://github.com/n0s3y/FirmAE
 ```
 
 2. Run `firm.sh` script to install FirmAE after cloning.
