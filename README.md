@@ -16,8 +16,18 @@ Note that we tested FirmAE on Kali 2022.3.
 git clone --recursive https://github.com/n0s3y/FirmAE
 ```
 
-2. Run `firm.sh` script to install FirmAE after cloning.
+2. Run 'cd FirmAE'
+```console
+cd FirmAE
+```
+
+3. Make the files executable (ONLY in the FirmAE folder!)
+```console
+chmod +x *
+```
+
+4. Run `firm.sh` script to install FirmAE after cloning.
 ```console
 ./firm.sh
 ```
-
+A popup to select the .bin firmware file in the FirmAE folder will popup and a type window will ask you to type in the brandname, use 'dlink' for the first test with the provided test firmware.
