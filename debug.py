@@ -127,12 +127,12 @@ if __name__ == '__main__':
         print('------------------------------')
         print('|       FirmAE Debugger      |')
         print('------------------------------')
-        print('1. connect to socat')
-        print('2. connect to shell')
-        print('3. tcpdump')
-        print('4. run gdbserver')
-        print('5. file transfer')
-        print('6. exit')
+        print('1. Connect to socat')
+        print('2. Connect to shell')
+        print('3. TCP-dump')
+        print('4. Run gdbserver')
+        print('5. File transfer')
+        print('6. Exit')
 
     while 1:
         menu()
