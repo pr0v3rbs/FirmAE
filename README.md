@@ -30,4 +30,8 @@ cd FirmAE
 ```console
 ./firm.sh
 ```
+5. Run `runner.sh` script to run and debug your firmware. 
+```console
+./runner.sh
+```
 A popup to select the .bin firmware file in the FirmAE folder will popup and a type window will ask you to type in the brandname, use 'dlink' for the first test with the provided test firmware.
