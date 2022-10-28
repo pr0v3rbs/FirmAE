@@ -53,6 +53,7 @@ if [ "${WEB_RESULT}" = "true" ]; then
     echo ${TIME_WEB} > ${WORK_DIR}/time_web
 fi
 
-kill $(ps aux | grep `get_qemu ${ARCH}` | awk '{print $2}') 2> /dev/null | true
+# Kill the qemu process, but keep the 'grep' process itself.
+kill $(ps aux | grep `get_qemu ${ARCH}` | grep -v grep | awk '{print $2}') | true
 
 sleep 2
