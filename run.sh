@@ -82,7 +82,7 @@ function run_emulation()
     WEB_RESULT=false
     IP=''
 
-    if [ ${BRAND} = "auto" ]; then
+    if [ "${BRAND}" = "auto" ]; then
       echo -e "[\033[31m-\033[0m] Invalid brand ${INFILE}"
       return
     fi
@@ -94,13 +94,19 @@ function run_emulation()
       fi
     fi
 
+    # Omit the argument '-b' when $BRAND is empty.
+    [ -n "$BRAND" ] && brand_arg="-b $BRAND" || brand_arg=""
+
     # ================================
     # extract filesystem from firmware
     # ================================
     t_start="$(date -u +%s.%N)"
+
+    # If the brand is not specified in the argument, it will be inferred 
+    # automatically from the path of the image file.
     timeout --preserve-status --signal SIGINT 300 \
-        ./sources/extractor/extractor.py -b $BRAND -sql $PSQL_IP -np -nk $INFILE images \
-        2>&1 >/dev/null
+        ./sources/extractor/extractor.py $brand_arg -sql $PSQL_IP -np \
+        -nk $INFILE images 2>&1 >/dev/null
 
     IID=`./scripts/util.py get_iid $INFILE $PSQL_IP`
     if [ ! "${IID}" ]; then
@@ -111,9 +117,11 @@ function run_emulation()
     # ================================
     # extract kernel from firmware
     # ================================
+    # If the brand is not specified in the argument, it will be inferred 
+    # automatically from the path of the image file.
     timeout --preserve-status --signal SIGINT 300 \
-        ./sources/extractor/extractor.py -b $BRAND -sql $PSQL_IP -np -nf $INFILE images \
-        2>&1 >/dev/null
+        ./sources/extractor/extractor.py $brand_arg -sql $PSQL_IP -np \
+        -nf $INFILE images 2>&1 >/dev/null
 
     WORK_DIR=`get_scratch ${IID}`
     mkdir -p ${WORK_DIR}
@@ -307,7 +315,7 @@ else
     FIRMWARES=`find ${3} -type f`
 
     for FIRMWARE in ${FIRMWARES}; do
-        if [ ! -d ${FIRMWARE} ]; then
+        if [ ! -d "${FIRMWARE}" ]; then
             run_emulation ${FIRMWARE}
         fi
     done
