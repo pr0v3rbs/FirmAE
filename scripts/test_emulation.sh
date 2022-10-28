@@ -43,12 +43,12 @@ fi
 echo -e "[*] Waiting web service... from ${IPS[@]}"
 read IP PING_RESULT WEB_RESULT TIME_PING TIME_WEB < <(check_network "${IPS[@]}" false)
 
-if (${PING_RESULT}); then
+if [ "${PING_RESULT}" = "true" ]; then
     echo true > ${WORK_DIR}/ping
     echo ${TIME_PING} > ${WORK_DIR}/time_ping
     echo ${IP} > ${WORK_DIR}/ip
 fi
-if (${WEB_RESULT}); then
+if [ "${WEB_RESULT}" = "true" ]; then
     echo true > ${WORK_DIR}/web
     echo ${TIME_WEB} > ${WORK_DIR}/time_web
 fi
