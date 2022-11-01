@@ -31,7 +31,7 @@ trap 'abort' 0
 #
 if zenity --question --title="Confirm Installation" --text="Are you sure you to install in this directory?" --no-wrap 
     then
-        zenity --info --title="Success" --text="Starting installation..." --no-wrap
+        echo "Starting..."
     else 
         exit
 fi
