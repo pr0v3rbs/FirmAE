@@ -42,11 +42,9 @@ sudo apt update
 # Download git
 sudo apt install git
 
-zenity --warning --title="Installing FirmAE" --text="Please do not close this terminal window." --no-wrap
 # Clone FirmAE & install it
 x-terminal-emulator -e ./download.sh 
 x-terminal-emulator -e ./install.sh 
-notify-send "File Downloader" "Download complete: FirmAE"
 #
 #
 #
