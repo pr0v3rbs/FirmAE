@@ -13,7 +13,7 @@ ANALYZE=$(zenity --list  --title "Choose Processor" --radiolist  --column "ID" -
 if zenity --question --title="FirmAE firmware runner" --text="Would you like to open this file with the FirmAE Debugger?"
 then
     ./init.sh
-    x-terminal-emulator -e  sudo ./run.sh ${ANALYZE} ${FILE}
+    sudo ./run.sh ${ANALYZE} ${FILE}
 else
     zenity --text-info --filename="$FILE" --title="Firmware runner"
 fi
