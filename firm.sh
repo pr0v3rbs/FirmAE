@@ -21,20 +21,12 @@ abort()
 
 trap 'abort' 0
 
-
-
-
 #CODE
 #
 #
 #
 #
-if zenity --question --title="Confirm Installation" --text="Are you sure you to install in this directory?" --no-wrap 
-    then
-        echo "Starting..."
-    else 
-        exit
-fi
+whiptail --textbox --scrolltext welcome.txt 10 80
 
 sudo apt update
 # If this fails, script should break/exit

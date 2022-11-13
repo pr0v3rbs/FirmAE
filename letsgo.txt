@@ -1,0 +1,1 @@
+You are about to emulate firmware with FirmAE. Things can take a while. Don't panic. Give the script about 10-15 minutes.
