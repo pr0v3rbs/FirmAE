@@ -16,7 +16,7 @@ FirmAE is a fully-automated framework that performs emulation and vulnerability 
 
 Note that we tested FirmAE on Kali 2022.3.
 
-1. Clone `FirmAE`.
+1. Clone `FirmAE`. If you do not use '--recursive', errors will occur.
 ```console
 git clone --recursive https://github.com/n0s3y/FirmAE
 ```
