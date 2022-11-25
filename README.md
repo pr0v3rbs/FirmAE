@@ -26,7 +26,7 @@ git clone --recursive https://github.com/n0s3y/FirmAE
 cd FirmAE
 ```
 
-4. Run `firm.sh` script to install FirmAE after cloning. 
+4. Run `firm.sh` script to install FirmAE after cloning. For the installation, a new terminal will open per script that starts. This will be confirmed by a print in the cli saying;'...sh has started'
 ```console
 ./firm.sh
 ```
@@ -34,4 +34,4 @@ cd FirmAE
 ```console
 ./runner.sh
 ```
-A popup to select the .bin firmware file in the FirmAE folder will popup and a type window will ask you to type in the brandname, use 'dlink' for the first test with the provided test firmware.
+A zenity popup to select the .bin firmware file in the FirmAE folder will popup and a type window will ask you to type in the brandname, use 'dlink' for the first test with the provided test firmware.
