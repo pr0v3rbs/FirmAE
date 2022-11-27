@@ -5,6 +5,8 @@ set -e
 download(){
  wget -N --continue -P./binaries/ $*
 }
+echo "Downloading firmware..."
+wget http://files.dlink.com.au/products/DIR-895L/REV_A/Firmware/Firmware_v1.13b03/DIR895LA1_FW113b03.bin
 
 echo "Downloading binaries..."
 

@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/kali/FirmAE/analyses/./initializer.py", line 6, in <module>
+    import selenium
+ModuleNotFoundError: No module named 'selenium'
+
+real	0m0.040s
+user	0m0.021s
+sys	0m0.017s
