@@ -33,7 +33,7 @@ $ ./init.sh
 
 2. Prepare a firmware.
 ```console
-$ wget ftp://ftp.dlink.eu/Products/dir/dir-868l/driver_software/DIR-868L_fw_revB_2-05b02_eu_multi_20161117.zip
+$ wget https://github.com/pr0v3rbs/FirmAE/releases/download/v1.0/DIR-868L_fw_revB_2-05b02_eu_multi_20161117.zip
 ```
 
 3. Check emulation
