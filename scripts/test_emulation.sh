@@ -43,16 +43,17 @@ fi
 echo -e "[*] Waiting web service... from ${IPS[@]}"
 read IP PING_RESULT WEB_RESULT TIME_PING TIME_WEB < <(check_network "${IPS[@]}" false)
 
-if (${PING_RESULT}); then
+if [ "${PING_RESULT}" = "true" ]; then
     echo true > ${WORK_DIR}/ping
     echo ${TIME_PING} > ${WORK_DIR}/time_ping
     echo ${IP} > ${WORK_DIR}/ip
 fi
-if (${WEB_RESULT}); then
+if [ "${WEB_RESULT}" = "true" ]; then
     echo true > ${WORK_DIR}/web
     echo ${TIME_WEB} > ${WORK_DIR}/time_web
 fi
 
-kill $(ps aux | grep `get_qemu ${ARCH}` | awk '{print $2}') 2> /dev/null | true
+# Kill the qemu process, but keep the 'grep' process itself.
+kill $(ps aux | grep `get_qemu ${ARCH}` | grep -v grep | awk '{print $2}') | true
 
 sleep 2

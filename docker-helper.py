@@ -93,7 +93,7 @@ class docker_helper:
                 f.readline()
                 last_line = f.readline()
                 if last_line.find("container failed") != -1:
-                    logging.error("[-] %s container failed to connect to the hosts' postgresql")
+                    logging.error("[-] %s container failed to connect to the hosts' postgresql".format(docker_name))
                     return docker_name
 
         if not iid:
