@@ -89,22 +89,22 @@ if (${FIRMAE_ETC}); then
 
 First, prepare a docker image.
 ```console
-$ sudo ./docker-init.sh
+$ ./docker-init.sh
 ```
 
 ### Parallel mode
 
 Then, run one of the below commands. ```-ec``` checks only the emulation, and ```-ea``` checks the emulation and analyzes vulnerabilities.
 ```console
-$ sudo ./docker-helper.py -ec <brand> <firmware>
-$ sudo ./docker-helper.py -ea <brand> <firmware>
+$ ./docker-helper.py -ec <brand> <firmware>
+$ ./docker-helper.py -ea <brand> <firmware>
 ```
 
 ### Debug mode
 
 After a firmware image successfully emulated.
 ```console
-$ sudo ./docker-helper.py -ed <firmware>
+$ ./docker-helper.py -ed <firmware>
 ```
 
 # Evaluation

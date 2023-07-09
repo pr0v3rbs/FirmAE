@@ -93,7 +93,7 @@ class firmae_helper():
 
     def run_gdbserver(self, PID, PORT=1337):
         print('[+] gdbserver at %s:%d attach on %s' % (self.targetIP, PORT, PID))
-        print('[+] run target "remote %s:%d" in host gdb' % (self.targetIP, PORT))
+        print('[+] run "target remote %s:%d" in host gdb-multiarch' % (self.targetIP, PORT))
         self.send('/firmadyne/gdbserver %s:%d --attach %s\n'%(self.targetIP, PORT, PID))
 
 
