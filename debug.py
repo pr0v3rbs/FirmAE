@@ -4,10 +4,14 @@ import subprocess
 import signal
 import sys
 import time
-import telnetlib
 import pdb
 from socket import *
 
+version_info = sys.version_info
+if version_info >= (3, 13):
+    import telnetlib3 as telnetlib
+else:
+    import telnetlib
 
 class firmae_helper():
     def __init__(self, iid):
