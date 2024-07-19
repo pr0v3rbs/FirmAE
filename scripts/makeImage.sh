@@ -50,7 +50,7 @@ qemu-img create -f raw "${IMAGE}" 1G
 chmod a+rw "${IMAGE}"
 
 echo "----Creating Partition Table----"
-echo -e "o\nn\np\n1\n\n\nw" | /sbin/fdisk "${IMAGE}"
+echo -e "o\nn\np\n1\n\n\nw" | fdisk "${IMAGE}"
 
 echo "----Mounting QEMU Image----"
 DEVICE=`add_partition ${IMAGE}`

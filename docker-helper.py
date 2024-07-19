@@ -49,15 +49,16 @@ class docker_helper:
                 -v /dev:/dev \\
                 -v {0}:/work/FirmAE \\
                 -v {1}:/work/firmwares \\
-                --privileged=true \\
+                --privileged \\
                 --name {2} \\
+                -p '5432:5432' \\
+                --add-host=host.docker.internal:host-gateway \\
                 fcore""".format(self.firmae_root,
                                 firmware_root,
                                 docker_name)
-
+        print(cmd)
         sp.check_output(cmd, shell=True)
         logging.info("[*] {} emulation start!".format(docker_name))
-        time.sleep(5)
 
         docker_mode = "-it" if mode == "-d" else "-id"
         cmd = "docker exec {0} \"{1}\" ".format(docker_mode, docker_name)
@@ -72,6 +73,7 @@ class docker_helper:
 
         t0 = time.time()
         iid = -1
+        print(cmd)
         if mode == "-d":
             os.system(cmd)
         else:
@@ -85,15 +87,14 @@ class docker_helper:
         if mode in ["-r", "-d"]:
             return docker_name
 
-        time.sleep(10)
         while iid == -1:
             time.sleep(1)
-            iid = util.get_iid(firmware_path, "127.0.0.1")
+            iid = util.get_iid(firmware_path, "host.docker.internal")
             with open(firmware_log) as f:
                 f.readline()
                 last_line = f.readline()
                 if last_line.find("container failed") != -1:
-                    logging.error("[-] %s container failed to connect to the hosts' postgresql".format(docker_name))
+                    logging.error("[-] {} container failed to connect to the hosts' postgresql".format(docker_name))
                     return docker_name
 
         if not iid:
