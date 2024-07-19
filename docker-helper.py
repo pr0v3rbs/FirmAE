@@ -52,6 +52,7 @@ class docker_helper:
                 --privileged \\
                 --name {2} \\
                 -p '5432:5432' \\
+                --add-host=host.docker.internal:host-gateway \\
                 fcore""".format(self.firmae_root,
                                 firmware_root,
                                 docker_name)
@@ -86,10 +87,9 @@ class docker_helper:
         if mode in ["-r", "-d"]:
             return docker_name
 
-        time.sleep(10)
         while iid == -1:
             time.sleep(1)
-            iid = util.get_iid(firmware_path, "127.0.0.1")
+            iid = util.get_iid(firmware_path, "host.docker.internal")
             with open(firmware_log) as f:
                 f.readline()
                 last_line = f.readline()

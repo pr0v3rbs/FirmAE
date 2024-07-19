@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y apt-utils wget tar bc psmisc ruby telne
     fusecram cramfsswap squashfs-tools sleuthkit default-jdk cpio \
     lzop lzma srecord zlib1g-dev liblzma-dev liblzo2-dev \
     qemu-system-arm qemu-system-mips qemu-system-x86 qemu-utils \
-    google-chrome-stable ntfs-3g postgresql
+    google-chrome-stable ntfs-3g postgresql fdisk
 
 RUN python3 -m pip install --upgrade pip && \
     python3 -m pip install psycopg2 psycopg2-binary python-lzo cstruct ubi_reader \
@@ -34,12 +34,12 @@ RUN wget https://github.com/ReFirmLabs/binwalk/archive/refs/tags/v2.3.4.tar.gz &
   python3 setup.py install
 
 COPY ./sudo /usr/bin/sudo
+COPY ./unstuff /usr/local/bin/unstuff
 
 RUN ln -s /bin/ntfs-3g /bin/mount.ntfs-3g && \
     chmod 777 /usr/bin/sudo && \
     mkdir -p /work/FirmAE && \
-    mkdir -p /work/firmwares && \
-    unstuff /usr/local/bin/
+    mkdir -p /work/firmwares
 
 ENV USER=root
 ENV FIRMAE_DOCKER=true
