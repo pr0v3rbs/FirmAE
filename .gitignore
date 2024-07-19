@@ -5,3 +5,5 @@
 binaries/
 images/
 scratch/
+binwalk-*/
+__pycache__
