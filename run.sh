@@ -146,7 +146,7 @@ function run_emulation()
         return
     fi
 
-    echo "[*] extract done!!!"
+    echo "[*] Extract done!!! (IID of ${INFILE} is ${IID})"
     t_end="$(date -u +%s.%N)"
     time_extract="$(bc <<<"$t_end-$t_start")"
     echo $time_extract > ${WORK_DIR}/time_extract
