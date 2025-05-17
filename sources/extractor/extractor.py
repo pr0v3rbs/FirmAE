@@ -770,7 +770,7 @@ def main():
                         help="Print debug information")
     result = parser.parse_args()
 
-    if psql_check(result.sql):
+    if result.debug or psql_check(result.sql):
         extract = Extractor(result.input, result.output, result.rootfs,
                             result.kernel, result.parallel, result.sql,
                             result.brand, result.debug)
