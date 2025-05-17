@@ -42,27 +42,34 @@ $ sudo ./run.sh -c <brand> <firmware>
 ```
 
 4. Analyze the target firmware
-    * Analysis mode uses the FirmAE analyzer
-    ```console
-    $ sudo ./run.sh -a <brand> <firmware>
-    ```
 
-    * Run mode helps to test web service or execute custom analyzer
-    ```console
-    $ sudo ./run.sh -r <brand> <firmware>
-    ```
+* Analysis mode uses the FirmAE analyzer
+
+```console
+$ sudo ./run.sh -a <brand> <firmware>
+```
+
+* Run mode helps to test web service or execute custom analyzer
+
+```console
+$ sudo ./run.sh -r <brand> <firmware>
+```
 
 ## Debug
 
 After `run.sh -c` finished.
 
-1. User-level basic debugging utility. (Useful when an emulated firmware is network reachable)
+### 1. User-level basic debugging utility.
+
+Useful when an emulated firmware is network reachable or not
+* It supports `socat` connection, `nc` reverse shell (31337) and `telnet` connection (31338)
+* And the setup will be done automatically
 
 ```console
 $ sudo ./run.sh -d <brand> <firmware>
 ```
 
-2. Kernel-level boot debugging.
+### 2. Kernel-level boot debugging.
 
 ```console
 $ sudo ./run.sh -b <brand> <firmware>
