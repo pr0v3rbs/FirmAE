@@ -768,12 +768,21 @@ def main():
                         help="Brand of the firmware image")
     parser.add_argument("-d", dest="debug", action="store_true", default=False,
                         help="Print debug information")
-    result = parser.parse_args()
+    arg = parser.parse_args()
 
-    if result.debug or psql_check(result.sql):
-        extract = Extractor(result.input, result.output, result.rootfs,
-                            result.kernel, result.parallel, result.sql,
-                            result.brand, result.debug)
+    if arg.input == arg.output:
+        print("[-] Maybe something is wrong. Please check input and output")
+        parser.print_help()
+        exit()
+
+    if arg.debug:
+        print("[*] Input : %s" % arg.input)
+        print("[*] Output: %s" % arg.output)
+
+    if arg.debug or psql_check(arg.sql):
+        extract = Extractor(arg.input,  arg.output,   arg.rootfs,
+                            arg.kernel, arg.parallel, arg.sql,
+                            arg.brand,  arg.debug)
         extract.extract()
 
 if __name__ == "__main__":
