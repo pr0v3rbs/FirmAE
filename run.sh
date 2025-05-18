@@ -146,7 +146,7 @@ function run_emulation()
         return
     fi
 
-    echo "[*] Extract done!!! (IID of ${INFILE} is ${IID})"
+    echo "[*] Extract done!!!"
     t_end="$(date -u +%s.%N)"
     time_extract="$(bc <<<"$t_end-$t_start")"
     echo $time_extract > ${WORK_DIR}/time_extract
@@ -172,8 +172,10 @@ function run_emulation()
         echo "not valid architecture : ${ARCH}" > ${WORK_DIR}/result
         return
     fi
+    echo "[+] get architecture done!!!"
 
-    echo "[*] get architecture done!!!"
+    echo "[+] Start emulation!!!"
+    echo -e "\n[IID] ${IID}\n[\033[33mMODE\033[0m] ${OPTION}"
     t_end="$(date -u +%s.%N)"
     time_arch="$(bc <<<"$t_end-$t_start")"
     echo $time_arch > ${WORK_DIR}/time_arch
@@ -225,7 +227,6 @@ function run_emulation()
         WEB_RESULT=true
     fi
 
-    echo -e "\n[IID] ${IID}\n[\033[33mMODE\033[0m] ${OPTION}"
     if ($PING_RESULT); then
         echo -e "[\033[32m+\033[0m] Network reachable on ${IP}!"
     fi
@@ -268,6 +269,11 @@ function run_emulation()
         # ================================
         if ($PING_RESULT); then
             echo -e "[\033[32m+\033[0m] Run debug!"
+            while [ ! -f ./scratch/$IID/run_debug.sh ];
+            do
+                echo "Wait until emulation was finished"
+                sleep 30
+            done
             IP=`cat ${WORK_DIR}/ip`
             ./scratch/$IID/run_debug.sh &
             check_network ${IP} true
