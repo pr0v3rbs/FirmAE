@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sudo apt update
-sudo apt install -y curl wget tar git ruby python python3 python3-pip bc
+sudo apt install -y curl wget tar git ruby python3 python3-pip bc
 sudo python3 -m pip install --upgrade pip
 sudo python3 -m pip install coloredlogs
 

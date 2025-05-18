@@ -7,7 +7,7 @@ By running our tool on the succesfully emulation firmware images, we discovered 
 
 # Installation
 
-Note that we tested FirmAE on Ubuntu 18.04.
+Note that we tested FirmAE on Ubuntu 20.04.
 
 1. Clone `FirmAE`
 ```console
