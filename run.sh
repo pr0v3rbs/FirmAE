@@ -206,7 +206,7 @@ function run_emulation()
         # TIMEOUT is set in "firmae.config". This TIMEOUT is used for initial
         # log collection.
         TIMEOUT=$TIMEOUT FIRMAE_NET=${FIRMAE_NET} \
-          python -u ./scripts/makeNetwork.py -i $IID -q -o -a ${ARCH} \
+          python3 -u ./scripts/makeNetwork.py -i $IID -q -o -a ${ARCH} \
           2>&1 > ${WORK_DIR}/makeNetwork.log
         ln -s ./run.sh ${WORK_DIR}/run_debug.sh | true
         ln -s ./run.sh ${WORK_DIR}/run_analyze.sh | true
