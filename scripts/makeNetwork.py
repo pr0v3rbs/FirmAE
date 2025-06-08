@@ -619,7 +619,7 @@ def checkNetwork(networkList):
                 result = "bridgereload"
 
         else:
-            print("[*] no network interface: bring up default network")
+            print("[-] no network interface: bring up default network")
             filterNetworkList.append(('192.168.0.1', 'eth0', None, None, "br0"))
             result = "default"
     else: # if checkVariable("FIRMAE_NET"):
@@ -682,7 +682,7 @@ def process(iid, arch, endianness, makeQemuCmd=False, outfile=None):
                 out.write(qemuCommandLine)
             os.chmod(outfile, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
 
-            os.system('./scripts/test_emulation.sh {} {}'.format(iid, arch + endianness))
+            os.system('./scripts/check_emulation.sh {} {}'.format(iid, arch + endianness))
 
             if (os.path.exists(SCRATCHDIR + '/' + str(iid) + '/web') and
                 open(SCRATCHDIR + '/' + str(iid) + '/web').read().strip() == 'true'):

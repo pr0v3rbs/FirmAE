@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ $# -ne 2 ]; then
-    echo $0: Usage: ./test_emulator.sh [iid] [arch]
+    echo $0: Usage: ./check_emulation.sh [iid] [arch]
     exit 1
 fi
 
@@ -21,12 +21,11 @@ IID=${1}
 WORK_DIR=`get_scratch ${IID}`
 ARCH=${2}
 
-echo "[*] test emulator"
-${WORK_DIR}/run.sh 2>&1 >${WORK_DIR}/emulation.log &
+echo "===== Check inferred emulation start ====="
+echo "[*] Inferred network: terminating after ${TIMEOUT} secs..."
+${WORK_DIR}/run.sh 2>&1 > ${WORK_DIR}/emulation.log &
 
 sleep 10
-
-echo ""
 
 IPS=()
 if (egrep -sq true ${WORK_DIR}/isDhcp); then
@@ -40,7 +39,7 @@ else
   done
 fi
 
-echo -e "[*] Waiting web service... from ${IPS[@]}"
+echo "[*] Waiting web service... from ${IPS[@]}: terminating after ${CHECK_TIMEOUT} secs..."
 read IP PING_RESULT WEB_RESULT TIME_PING TIME_WEB < <(check_network "${IPS[@]}" false)
 
 if [ "${PING_RESULT}" = "true" ]; then
@@ -55,5 +54,7 @@ fi
 
 # Kill the qemu process, but keep the 'grep' process itself.
 kill $(ps aux | grep `get_qemu ${ARCH}` | grep -v grep | awk '{print $2}') | true
+
+echo "=====  Check inferred emulation end  ====="
 
 sleep 2
