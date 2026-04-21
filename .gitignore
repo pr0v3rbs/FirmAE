@@ -5,3 +5,13 @@
 binaries/
 images/
 scratch/
+
+# =========================
+# FastAPI / Service artifacts
+# =========================
+*.db
+__pycache__/
+*.pyc
+
+# Temp firmware storage
+/tmp/
