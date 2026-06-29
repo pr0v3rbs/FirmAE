@@ -57,7 +57,16 @@ python3 -m pip install -r ./requirements.txt
 sudo apt install -y qemu-system-arm qemu-system-mips qemu-system-x86 qemu-utils
 
 if ! test -e "./analyses/chromedriver"; then
-    wget https://chromedriver.storage.googleapis.com/2.38/chromedriver_linux64.zip
-    unzip chromedriver_linux64.zip -d ./analyses/
-    rm -rf chromedriver_linux64.zip
+    if wget --timeout=30 --tries=2 -q https://chromedriver.storage.googleapis.com/2.38/chromedriver_linux64.zip; then
+        unzip chromedriver_linux64.zip -d ./analyses/
+        rm -rf chromedriver_linux64.zip
+    else
+        if wget --timeout=30 --tries=2 -q https://mirrors.huaweicloud.com/chromedriver/135.0.7019.0/chromedriver-linux64.zip; then
+            unzip chromedriver-linux64.zip -d ./analyses/
+            rm -rf chromedriver-linux64.zip
+        else
+            echo "Error：cannot download chromedriver"
+            exit 1
+        fi
+    fi
 fi
