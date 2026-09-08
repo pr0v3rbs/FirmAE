@@ -381,7 +381,7 @@ def startNetwork(network):
 TAPDEV_%(I)i=tap${IID}_%(I)i
 HOSTNETDEV_%(I)i=${TAPDEV_%(I)i}
 echo "Creating TAP device ${TAPDEV_%(I)i}..."
-sudo tunctl -t ${TAPDEV_%(I)i} -u ${USER}
+sudo ip tuntap add dev ${TAPDEV_%(I)i} mode tap user ${USER}
 """
 
     if checkVariable("FIRMAE_NET"):
@@ -438,7 +438,7 @@ sudo ip link delete ${HOSTNETDEV_%(I)i}
 
     template_2 = """
 echo "Deleting TAP device ${TAPDEV_%(I)i}..."
-sudo tunctl -d ${TAPDEV_%(I)i}
+sudo ip tuntap del dev ${TAPDEV_%(I)i} mode tap
 """
 
     output = []

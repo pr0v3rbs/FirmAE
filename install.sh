@@ -22,7 +22,7 @@ echo "host all all 172.17.0.1/24 trust" | sudo -u postgres tee --append /etc/pos
 sudo apt install -y libpq-dev
 python3 -m pip install psycopg2 psycopg2-binary
 
-sudo apt install -y busybox-static bash-static fakeroot dmsetup kpartx netcat-openbsd nmap python3-psycopg2 snmp uml-utilities util-linux vlan
+sudo apt install -y busybox-static bash-static fakeroot dmsetup kpartx netcat-openbsd nmap python3-psycopg2 snmp util-linux vlan
 
 # for binwalk
 wget https://github.com/ReFirmLabs/binwalk/archive/refs/tags/v2.3.4.tar.gz && \

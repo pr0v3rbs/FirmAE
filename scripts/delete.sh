@@ -38,7 +38,7 @@ sudo ./scripts/umount.sh ${IID}
 echo "In case the network is configured, reconfigure it now ..."
 for i in 0 .. 4; do
     sudo ifconfig tap${IID}_${i} down
-    sudo tunctl -d tap${IID}_${i}
+    sudo ip tuntap del dev tap${IID}_${i} mode tap
 done
 
 #Cleanup database:
